@@ -4,3 +4,6 @@ sample
 tests
 __pycache__
 output.jsonl
+baseline-code.marshal
+baseline-state.json
+prepared.json

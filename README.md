@@ -50,12 +50,16 @@ patch itself. The image needs only the Python standard library.
 | Fixture or other data file | tests that opened it (setUpClass reads count for the whole class) |
 | `pyproject.toml`, `setup.cfg`, `conftest.py`, renames, deleted modules, unparsable diffs | everything |
 
-**Import-time edits.** The patched sqlglot is imported from memory in a child
-process (`fingerprint.py`, no files written except a bytecode cache in `/tmp`).
+**Import-time edits.** The patched sqlglot is imported from memory in a forked
+child of a small server process (`fingerprint.py --serve`); nothing is written.
 Every module global and every class attribute is reduced to a hash (dict and set
 contents, closures, defaults of generated functions, wrapper types, derived tries;
 not function bodies, which coverage handles). The same is done once for the
-pinned source. Attributes whose hash differs are the change:
+pinned source while the image is built (`selector.py --prepare`; build time is not
+charged), together with the compiled baseline modules, so a run only compiles the
+patched files. Plain defs whose arguments or constant defaults changed skip this
+step: their stored function object cannot differ. Attributes whose hash differs
+are the change:
 
 - changed class attributes select the tests that instantiated that class, a
   subclass, or another class of the same dialect (tokenizer, parser, generator);

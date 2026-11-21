@@ -191,6 +191,60 @@ def edited_lines(hunks) -> tuple[set[int], set[int]]:
     return removed, added
 
 
+def touched_new_lines(hunks) -> set[int]:
+    """New line numbers that an edit added, or that sit next to removed lines."""
+    touched = set()
+    offset = 0
+    for old_start, body in hunks:
+        new_line = max(old_start, 1) + offset
+        for tag, _ in body:
+            if tag == ' ':
+                new_line += 1
+            elif tag == '-':
+                touched.update((new_line - 1, new_line))
+                offset -= 1
+            elif tag == '+':
+                touched.add(new_line)
+                new_line += 1
+                offset += 1
+    return touched
+
+
+def check_compiles(tree, path, touched: set[int]):
+    """Compile the statements an edit touched, inside the classes that hold them.
+
+    Errors that only the compiler reports (return or await outside a function, a
+    nonlocal without binding...) are local to the function or class statement that
+    has them. A touched __future__ import, or nothing touched, compiles everything.
+    """
+    marks = sorted(touched)
+
+    def is_touched(node):
+        i = bisect.bisect_left(marks, first_line(node))
+        return i < len(marks) and marks[i] <= node.end_lineno
+
+    future = [s for s in tree.body if isinstance(s, ast.ImportFrom) and s.module == '__future__']
+    if not marks or any(is_touched(s) for s in future):
+        compile(tree, path, 'exec', dont_inherit=True)
+        return
+
+    def prune(stmt):
+        if not isinstance(stmt, ast.ClassDef):
+            return stmt
+        members = [prune(s) for s in stmt.body if is_touched(s)] or [ast.Pass()]
+        copy = ast.ClassDef(
+            name=stmt.name, bases=stmt.bases, keywords=stmt.keywords, body=members,
+            decorator_list=stmt.decorator_list, type_params=getattr(stmt, 'type_params', []),
+        )
+        return ast.fix_missing_locations(ast.copy_location(copy, stmt))
+
+    body = [prune(s) for s in tree.body if is_touched(s)]
+    if not body:
+        compile(tree, path, 'exec', dont_inherit=True)
+        return
+    compile(ast.Module(body=future + body, type_ignores=[]), path, 'exec', dont_inherit=True)
+
+
 def apply_hunks(source: str, hunks) -> str:
     """The patched text, verifying every context and removed line."""
     old = source.split('\n') if source else []
@@ -412,6 +466,36 @@ def swap_sites(a, b, sites, top=True) -> bool:
     return a == b
 
 
+SAFE_EXPRESSIONS = (
+    ast.Constant, ast.Name, ast.Attribute, ast.Tuple, ast.List, ast.Set, ast.Dict, ast.UnaryOp,
+    ast.BinOp, ast.BoolOp, ast.Compare, ast.Subscript, ast.IfExp, ast.Slice, ast.Starred,
+    ast.expr_context, ast.operator, ast.unaryop, ast.boolop, ast.cmpop,
+)
+
+
+def inert_header_change(a, b) -> bool:
+    """A def whose new arguments, defaults and annotations cannot change import-time state.
+
+    Without decorators the stored object is the plain function, and the fingerprint
+    ignores the defaults and annotations of functions defined in source; they only
+    matter to callers, which the function's coverage selects. Expressions that could
+    run code with side effects while defining (calls, lambdas...) do not qualify.
+    """
+    if a.name != b.name or a.decorator_list or b.decorator_list:
+        return False
+    if [dump(t) for t in getattr(a, 'type_params', [])] != [dump(t) for t in getattr(b, 'type_params', [])]:
+        return False
+    for fn in (a, b):
+        parts = [fn.args, fn.returns] if fn.returns is not None else [fn.args]
+        for part in parts:
+            for node in ast.walk(part):
+                if isinstance(node, (ast.arguments, ast.arg, ast.keyword)):
+                    continue
+                if not isinstance(node, SAFE_EXPRESSIONS):
+                    return False
+    return True
+
+
 def statement_name(stmt):
     if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
         return stmt.name
@@ -490,6 +574,13 @@ class Differ:
         if lines & self.import_lines:
             self.import_time = True
 
+    def add_function(self, fn):
+        """Every test that entered fn. Its def line runs at import by definition; only its
+        body running at import (a call while importing) makes this an import-time edit."""
+        self.lines |= set(full_lines(fn))
+        if set(range(fn.body[0].lineno, fn.end_lineno + 1)) & self.import_lines:
+            self.import_time = True
+
     def block(self, old, new, parent, scope):
         old = [s for s in old if not is_noop(s)]
         new = [s for s in new if not is_noop(s)]
@@ -551,14 +642,15 @@ class Differ:
             return
         if isinstance(a, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if header_dump(a) != header_dump(b):
-                # Callers see new defaults or decorators; definitions run when the scope does.
-                self.add(full_lines(a))
+                # Callers see new arguments, defaults or decorators.
+                self.add_function(a)
                 if scope == 'function':
                     self.add(header_lines(a))
-                else:
+                elif not inert_header_change(a, b):
+                    # Decorators or evaluated defaults can change what the definition stores.
                     self.import_time = True
             if bindings(a) != bindings(b):
-                self.add(full_lines(a))
+                self.add_function(a)
             self.block(a.body, b.body, a, 'function')
             return
         if isinstance(a, ast.ClassDef):
@@ -773,28 +865,120 @@ def import_only_command(argv) -> bool:
 # ---------------------------------------------------------------- import-time state
 
 class ImportState:
-    """Fingerprints of sqlglot's import-time state, baseline and patched (child processes)."""
+    """Fingerprints of sqlglot's import-time state, baseline and patched (child processes).
 
-    def __init__(self, sources: dict[str, str]):
+    The baseline state and compiled baseline modules are prepared while the image is
+    built (`--prepare`, not charged), or else once per run into the temp directory.
+    """
+
+    def __init__(self, sources: dict[str, str], prepared: Path = HERE):
         self.sources = {k: v for k, v in sources.items() if k.startswith('sqlglot/')}
-        self._baseline = None
         self.runs = 0
-        self.cache = os.path.join(tempfile.gettempdir(), f'blast-radius-code-{os.getpid()}.marshal')
+        self.stamp = state_stamp(self.sources)
+        self.temporary = []
+        self.code = self.state = None
+        meta = prepared / 'prepared.json'
+        try:
+            if json.loads(meta.read_text()) == self.stamp:
+                code, state = prepared / 'baseline-code.marshal', prepared / 'baseline-state.json'
+                if code.is_file() and state.is_file():
+                    self.code, self.state = str(code), str(state)
+        except (OSError, ValueError):
+            pass
+        self.failed = False
+        self.server = None
 
     def close(self):
-        try:
-            os.remove(self.cache)
-        except OSError:
-            pass
+        if self.server is not None:
+            try:
+                self.server.stdin.close()
+                self.server.wait(timeout=10)
+            except Exception:  # noqa: BLE001
+                self.kill_server()
+        for path in self.temporary:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
 
-    def run(self, overrides: dict[str, str]) -> dict | None:
-        request = json.dumps({'sources': self.sources, 'overrides': overrides, 'cache': self.cache})
-        env = {'PYTHONHASHSEED': '0', 'PATH': os.environ.get('PATH', '/usr/bin:/bin'), 'HOME': os.environ.get('HOME', '/tmp')}
+    @staticmethod
+    def env():
+        return {'PYTHONHASHSEED': '0', 'PATH': os.environ.get('PATH', '/usr/bin:/bin'), 'HOME': os.environ.get('HOME', '/tmp')}
+
+    def kill_server(self):
+        if self.server is not None:
+            try:
+                os.killpg(self.server.pid, 9)  # the server and the fork it is waiting on
+            except OSError:
+                pass
+            try:
+                self.server.wait(timeout=10)
+            except Exception:  # noqa: BLE001
+                pass
+        self.server = None
+
+    def readline(self, timeout):
+        """One line from the server, or None after `timeout` seconds."""
+        import select
+        fd = self.server.stdout.fileno()
+        deadline = time.monotonic() + timeout
+        data = b''
+        while b'\n' not in data:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0 or not select.select([fd], [], [], remaining)[0]:
+                return None
+            chunk = os.read(fd, 1 << 20)
+            if not chunk:
+                return None
+            data += chunk
+        return data.split(b'\n', 1)[0].decode()
+
+    def ask(self, overrides) -> dict | None:
+        """Fingerprint the patched import in a fork of a server holding the baseline."""
+        self.runs += 1
+        if self.server is None:
+            try:
+                self.server = subprocess.Popen(
+                    [sys.executable, '-s', '-B', str(HERE / 'fingerprint.py'), '--serve'],
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                    env=self.env(), cwd=str(HERE), start_new_session=True, bufsize=0,
+                )
+                self.server.stdin.write((json.dumps({'cache': self.code, 'baseline': self.state}) + '\n').encode())
+                self.server.stdin.flush()
+                if self.readline(60) is None:
+                    raise OSError('fingerprint server did not start')
+            except OSError as error:
+                log('fingerprint server unavailable:', error)
+                self.kill_server()
+                self.runs -= 1
+                return self.run({'overrides': overrides, 'cache': self.code, 'baseline': self.state})
+        try:
+            self.server.stdin.write((json.dumps({'overrides': overrides}) + '\n').encode())
+            self.server.stdin.flush()
+        except OSError:
+            self.kill_server()
+            return None
+        line = self.readline(120)
+        if line is None:
+            log('fingerprint timed out or died')
+            self.kill_server()
+            return None
+        try:
+            result = json.loads(line)
+        except ValueError:
+            return None
+        if not result.get('ok'):
+            log('fingerprint import failed:', result.get('error'))
+            return None
+        return result
+
+    def run(self, request: dict) -> dict | None:
+        env = self.env()
         self.runs += 1
         try:
             done = subprocess.run(
                 [sys.executable, '-s', '-B', str(HERE / 'fingerprint.py')],
-                input=request, capture_output=True, text=True, timeout=60, env=env, cwd=str(HERE),
+                input=json.dumps(request), capture_output=True, text=True, timeout=120, env=env, cwd=str(HERE),
             )
         except subprocess.TimeoutExpired:
             log('fingerprint timed out')
@@ -809,38 +993,62 @@ class ImportState:
             return None
         return result
 
-    def baseline(self):
-        if self._baseline is None:
-            self._baseline = self.run({}) or False
-        return self._baseline
+    def prepare(self, code: str, state: str) -> bool:
+        result = self.run({'sources': self.sources, 'cache': code, 'write_cache': True, 'write_state': state})
+        return bool(result) and os.path.isfile(code) and os.path.isfile(state)
+
+    def baseline(self) -> bool:
+        if self.state is None and not self.failed:
+            base = os.path.join(tempfile.gettempdir(), f'blast-radius-{os.getpid()}')
+            code, state = base + '-code.marshal', base + '-state.json'
+            self.temporary += [code, state]
+            if self.prepare(code, state):
+                self.code, self.state = code, state
+            else:
+                self.failed = True
+        return self.state is not None
 
     def changes(self, overrides):
-        base = self.baseline()
-        if not base:
+        if not self.baseline():
             raise Everything('baseline import state unavailable')
-        patched = self.run(overrides)
-        if patched is None:
+        result = self.ask(overrides)
+        if result is None:
             raise Everything('patched sqlglot fails to import')
-        new_failures = set(patched['failures']) - set(base['failures'])
-        if new_failures:
-            raise Everything(f'patched modules fail to import: {sorted(new_failures)[:3]}')
-        changed = {}
-        for owner in set(base['owners']) | set(patched['owners']):
-            old = base['owners'].get(owner)
-            new = patched['owners'].get(owner)
-            if old == new:
-                continue
-            if old is None or new is None:
-                changed[owner] = None  # added or removed
-            else:
-                # attribute -> kind ('d' data, 'c' code), from whichever side has it
-                changed[owner] = {
-                    a: (new.get(a) or old.get(a) or '?')[:1]
-                    for a in set(old) | set(new) if old.get(a) != new.get(a)
-                }
-        modules = dict(base['modules'])
-        modules.update(patched['modules'])
-        return changed, modules
+        if result['new_failures']:
+            raise Everything(f'patched modules fail to import: {result["new_failures"][:3]}')
+        return result['changed'], None
+
+
+def state_stamp(sources) -> dict:
+    """What prepared baseline files must have been built from: these sources, this Python."""
+    import hashlib
+    import importlib.util
+    digest = hashlib.sha256()
+    for path in sorted(sources):
+        digest.update(path.encode() + b'\0' + sources[path].encode('utf-8', 'surrogatepass') + b'\0')
+    fingerprint = (HERE / 'fingerprint.py').read_bytes() if (HERE / 'fingerprint.py').is_file() else b''
+    return {
+        'sources': digest.hexdigest(),
+        'fingerprint': hashlib.sha256(fingerprint).hexdigest(),
+        'python': sys.version,
+        'magic': importlib.util.MAGIC_NUMBER.hex(),
+    }
+
+
+def prepare(map_path: Path) -> int:
+    """Build-time: write the baseline import state and compiled modules next to the selector."""
+    with gzip.open(map_path, 'rt') as f:
+        sources = json.load(f)['sources']
+    state = ImportState(sources, prepared=Path('/nonexistent'))
+    code, saved = HERE / 'baseline-code.marshal', HERE / 'baseline-state.json'
+    if not state.prepare(str(code), str(saved)):
+        log('prepare failed; the baseline will be computed at run time')
+        return 0
+    (HERE / 'prepared.json').write_text(json.dumps(state.stamp))
+    for path in (code, saved, HERE / 'prepared.json'):
+        os.chmod(path, 0o644)
+    log('prepared baseline import state')
+    return 0
 
 
 # ---------------------------------------------------------------- selection
@@ -850,10 +1058,19 @@ class Selector:
         self.m = dependency_map
         self.state = ImportState(dependency_map.sources)
         self._texts = None
+        self._references = None
 
     # -- textual references: lines naming something, executed by which tests
 
     def references(self, pattern: re.Pattern, literals) -> set[int]:
+        if self._references is None:
+            self._references = {}
+        key = pattern.pattern
+        if key not in self._references:
+            self._references[key] = self._scan(pattern, literals)
+        return set(self._references[key])
+
+    def _scan(self, pattern: re.Pattern, literals) -> frozenset:
         tests = set()
         literals = sorted(set(literals))
         for path, text in self.m.sources.items():
@@ -871,7 +1088,7 @@ class Selector:
             # Import-time uses show up as changed state of their own; collection-time
             # uses in test files are already charged to every test of that file.
             tests |= self.m.executors(path, lines)
-        return tests
+        return frozenset(tests)
 
     def line_starts(self, path):
         if self._texts is None:
@@ -945,7 +1162,8 @@ class Selector:
                 continue
             if path.endswith('.py') and path in m.sources:
                 new_text = apply_hunks(m.sources[path], f.hunks)
-                found, import_time = self.python_change(path, m.sources[path], new_text, explain, edited_lines(f.hunks))
+                found, import_time = self.python_change(
+                    path, m.sources[path], new_text, explain, edited_lines(f.hunks), touched_new_lines(f.hunks))
                 tests |= found
                 if import_time:
                     if path.startswith('sqlglot/'):
@@ -1016,12 +1234,15 @@ class Selector:
             tests |= self.m.file_tests.get(f, set())
         return tests
 
-    def python_change(self, path, old_text, new_text, explain, edited=None):
+    def python_change(self, path, old_text, new_text, explain, edited=None, touched=None):
         if old_text == new_text:
             return set(), False
         try:
             new_tree = ast.parse(new_text)
-            compile(new_text, path, 'exec', dont_inherit=True)
+            if touched is None:
+                compile(new_tree, path, 'exec', dont_inherit=True)
+            else:
+                check_compiles(new_tree, path, touched)
         except (SyntaxError, ValueError) as error:
             raise Everything(f'{path} does not compile: {error}')
         if coding_lines(old_text) != coding_lines(new_text):
@@ -1214,7 +1435,10 @@ def main():
     parser.add_argument('--map', type=Path, default=HERE / 'dependencies.json.gz')
     parser.add_argument('--all-tests', action='store_true')
     parser.add_argument('--explain', action='store_true')
+    parser.add_argument('--prepare', action='store_true', help='build time: precompute the baseline import state')
     args = parser.parse_args()
+    if args.prepare:
+        raise SystemExit(prepare(args.map))
     started = time.process_time()
     catalog = json.loads((args.data / 'tests.json').read_text())['tests']
     durations = {t['number']: round(t['seconds'] * 1000) for t in catalog}

@@ -2,8 +2,8 @@ import ast
 import unittest
 
 from selector import (
-    Differ, Everything, SpanIndex, apply_hunks, bindings, edited_lines, import_only_command,
-    pair_statements, parse_patch, schedule, swap_sites,
+    Differ, Everything, SpanIndex, apply_hunks, bindings, check_compiles, edited_lines, import_only_command,
+    pair_statements, parse_patch, schedule, swap_sites, touched_new_lines,
 )
 
 
@@ -121,9 +121,15 @@ class DifferTests(unittest.TestCase):
     def test_default_change(self):
         old = 'class A:\n    def f(self, x=1):\n        return x\n'
         new = old.replace('x=1', 'x=2')
-        lines, import_time = locate(old, new)
-        self.assertEqual(lines, {2, 3})
-        self.assertTrue(import_time)
+        # Plain def, constant default: callers only, no import-time state can change.
+        self.assertEqual(locate(old, new), ({2, 3}, False))
+        # Unless the function also runs while importing.
+        self.assertEqual(locate(old, new, import_lines={2, 3}), ({2, 3}, True))
+        # Decorators or defaults that call code may store something different.
+        decorated = 'class A:\n    @cache\n    def f(self, x=1):\n        return x\n'
+        self.assertEqual(locate(decorated, decorated.replace('x=1', 'x=2'))[1], True)
+        called = old.replace('x=1', 'x=make()')
+        self.assertEqual(locate(called, called.replace('make()', 'other()'))[1], True)
 
     def test_shared_state_writes(self):
         old = 'class P:\n    D = {}\n    def f(self):\n        self.D["k"] = 1\n        x = 2\n        self.D.pop("k")\n'
@@ -156,6 +162,26 @@ class DifferTests(unittest.TestCase):
         names, flags, _ = bindings(f)
         self.assertEqual(names, {'a', 'b'})
         self.assertIn('yield', flags)
+
+
+class CompileCheckTests(unittest.TestCase):
+    def check(self, old, new):
+        hunks = parse_patch(''.join(__import__('difflib').unified_diff(
+            old.splitlines(True), new.splitlines(True), 'a/x.py', 'b/x.py')))[0].hunks
+        check_compiles(ast.parse(new), 'x.py', touched_new_lines(hunks))
+
+    def test_errors_inside_touched_statements(self):
+        old = 'class A:\n    def f(self):\n        for x in y:\n            pass\n        return 1\n\ndef g():\n    return 2\n'
+        self.check(old, old.replace('return 2', 'return 3'))
+        with self.assertRaises(SyntaxError):
+            self.check(old, old.replace('            pass\n', '            pass\n        break\n'))
+        with self.assertRaises(SyntaxError):
+            self.check(old, old.replace('        return 1', '        await z'))
+
+    def test_deleted_binding_for_nonlocal(self):
+        old = 'def f():\n    x = 1\n    def g():\n        nonlocal x\n        x = 2\n    return g\n'
+        with self.assertRaises(SyntaxError):
+            self.check(old, old.replace('    x = 1\n', ''))
 
 
 class AlignmentTests(unittest.TestCase):

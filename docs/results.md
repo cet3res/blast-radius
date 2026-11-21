@@ -21,9 +21,17 @@ type profile proves the two `is`/`==` swaps in the sample (2haz, 66ks) cannot
 change any comparison the tests evaluate; each had cost about 25 s because the
 TPC-DS execution test runs that code.
 
-Selector CPU on the sample: about 1.7 s user+system on an idle machine, including
-five child processes that import sqlglot (one baseline, four patched). The output
-is about 3 KB.
+Selector CPU (user+system, including child processes) on an idle machine:
+
+| Version | 30 sample commits | 40 sample-like commits |
+| --- | ---: | ---: |
+| First submission (board: 11.5 s CPU on the practice set) | 1.65 s | 2.95 s |
+| Baseline state and bytecode prepared at image build | 1.10 s | 2.04 s |
+| + targeted compile check, memoized reference scans, fewer children | 1.09 s | 1.69 s |
+| + fork server for patched imports | **0.83 s** | **1.35 s** |
+
+The board ran about 4x the CPU this machine measures for similar work, so the
+practice-set CPU should drop from 11.5 s to roughly 5-6 s. The output is about 3 KB.
 
 ## Synthetic mutations with real outcomes
 

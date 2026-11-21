@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import enum
 import functools
-import gc
 import hashlib
 import importlib.abc
 import importlib.util
@@ -35,19 +34,20 @@ SKIP_CLASS_ATTRS = {
 
 
 class Finder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
-    def __init__(self, sources, codes, fresh):
+    def __init__(self, sources, codes, fresh, available):
         self.sources = sources
         self.codes = codes  # compiled baseline modules, reused for files the patch leaves alone
         self.fresh = fresh  # paths that must be compiled from source
+        self.available = available
         self.compiled = {}
 
     def find_spec(self, name, path, target=None):
         if name != 'sqlglot' and not name.startswith('sqlglot.'):
             return None
         rel = name.replace('.', '/')
-        if rel + '/__init__.py' in self.sources:
+        if rel + '/__init__.py' in self.available:
             return importlib.util.spec_from_loader(name, self, origin=ROOT + rel + '/__init__.py', is_package=True)
-        if rel + '.py' in self.sources:
+        if rel + '.py' in self.available:
             return importlib.util.spec_from_loader(name, self, origin=ROOT + rel + '.py', is_package=False)
         return None
 
@@ -82,14 +82,16 @@ class Fingerprinter:
 
     def __call__(self, o):
         t = type(o)
-        if o is None or t in (bool, int, float, complex):
-            return f'{t.__name__}:{o!r}'
-        if t in (str, bytes):
-            text = f'{t.__name__}:{o!r}'
+        if t is str:
+            text = 'str:' + repr(o)
             return text if len(text) < 80 else 'h:' + _hash(text)
         i = id(o)
-        if i in self.memo:
-            return self.memo[i]
+        known = self.memo.get(i)
+        if known is not None:
+            return known
+        if o is None or t in (bool, int, float, complex, bytes):
+            text = f'{t.__name__}:{o!r}'
+            return text if len(text) < 80 else 'h:' + _hash(text)
         if i in self.active:
             return '<cycle>'
         self.active.add(i)
@@ -113,7 +115,7 @@ class Fingerprinter:
             return f'enum:{self.class_key(type(o))}.{o.name}={f(o._value_)}'
         if isinstance(o, (tuple, list)):
             items = list(map(f, o))
-            if items and all(isinstance(x, type) for x in o):
+            if items and isinstance(o[0], type) and all(isinstance(x, type) for x in o):
                 items.sort()  # class tuples feed isinstance; built from sets, their order varies by run
             return type(o).__name__ + ':' + self.class_key(type(o)) + '(' + ','.join(items) + ')'
         if isinstance(o, dict):
@@ -255,37 +257,73 @@ def collect_classes():
     return list(classes.values())
 
 
+def load_codes(path):
+    try:
+        with open(path, 'rb') as f:
+            codes = marshal.load(f)
+        return codes if isinstance(codes, dict) else {}
+    except (OSError, ValueError, EOFError, TypeError):
+        return {}
+
+
+def diff(base, patched):
+    """Owners whose state differs: owner -> {attribute: kind} (None when added or removed)."""
+    changed = {}
+    for owner in set(base) | set(patched):
+        old, new = base.get(owner), patched.get(owner)
+        if old == new:
+            continue
+        if old is None or new is None:
+            changed[owner] = None
+        else:
+            changed[owner] = {
+                a: (new.get(a) or old.get(a) or '?')[:1] for a in set(old) | set(new) if old.get(a) != new.get(a)
+            }
+    return changed
+
+
 def main():
+    """Request (stdin JSON):
+
+    sources      every sqlglot source, needed only when no code cache is given
+    overrides    patched or new files, always compiled from source
+    cache        marshal file of compiled baseline modules (read; written when write_cache)
+    write_state  write this run's full state there (baseline runs)
+    baseline     a written state: answer only with the differences from it
+    """
     request = json.loads(sys.stdin.read())
-    sources = request['sources']
-    overrides = request.get('overrides', {})
-    sources.update(overrides)
     cache = request.get('cache')
-    codes = {}
-    if cache and overrides:
-        try:
-            with open(cache, 'rb') as f:
-                codes = marshal.load(f)
-        except (OSError, ValueError, EOFError, TypeError):
-            codes = {}
-    finder = Finder(sources, codes, set(overrides))
+    codes = load_codes(cache) if cache and not request.get('write_cache') else {}
+    base = None
+    if request.get('baseline'):
+        with open(request['baseline']) as f:
+            base = json.load(f)
+    print(json.dumps(compute(request, codes, base)))
+
+
+def compute(request, codes, base):
+    """Import sqlglot with the request's overrides and fingerprint it (see main)."""
+    overrides = request.get('overrides', {})
+    cache = request.get('cache')
+    sources = dict(request.get('sources') or {})
+    sources.update(overrides)
+    available = set(sources) | set(codes)
+    finder = Finder(sources, codes, set(overrides), available)
     sys.meta_path.insert(0, finder)
     sys.setrecursionlimit(max(sys.getrecursionlimit(), 10000))
-    state = {}
     failures = {}
     try:
         import sqlglot  # noqa: F401
         dialect = sys.modules['sqlglot.dialects.dialect'].Dialect
-        state['<init>'] = {
+        init = {
             'modules': _hash(','.join(sorted(n for n in sys.modules if n == 'sqlglot' or n.startswith('sqlglot.')))),
             'dialects': _hash(','.join(sorted(map(str, type(dialect)._classes)))) if hasattr(type(dialect), '_classes') else '',
         }
     except BaseException as error:  # noqa: BLE001
-        print(json.dumps({'ok': False, 'error': f'import sqlglot: {error!r}'}))
-        return
+        return {'ok': False, 'error': f'import sqlglot: {error!r}'}
     modules = sorted(
         (p[:-12] if p.endswith('/__init__.py') else p[:-3]).replace('/', '.')
-        for p in sources if p.startswith('sqlglot/') and p.endswith('.py')
+        for p in available if p.startswith('sqlglot/') and p.endswith('.py')
     )
     for name in modules:
         if name == 'sqlglot.__main__':
@@ -299,7 +337,8 @@ def main():
     except BaseException as error:  # noqa: BLE001
         failures['<dialects>'] = repr(error)
 
-    gc.collect()  # the dialect metaclass leaves unused generated classes behind
+    # Generated classes nobody references get '#' keys below and are skipped, so
+    # whether the collector has run yet does not matter.
     classes = collect_classes()
     dialects = [c for c in classes if isinstance(c, type) and issubclass(c, dialect)]
     keys = class_keys(classes, dialects)
@@ -315,7 +354,6 @@ def main():
                 continue
             attrs[attr] = attr_hash(fp, value)
         owners['module:' + name] = attrs
-    modules_of = {}
     for cls in classes:
         key = keys[id(cls)]
         if '#' in key:
@@ -328,8 +366,7 @@ def main():
         attrs['<bases>'] = _hash(','.join(keys.get(id(b), fp(b)) for b in cls.__bases__))
         attrs['<metaclass>'] = _hash(fp(type(cls)))
         owners[key] = attrs
-        modules_of[key] = cls.__module__
-    owners['<init>'] = state['<init>']
+    owners['<init>'] = init
     owners['<runtime>'] = {
         'recursionlimit': str(sys.getrecursionlimit()),
         'loggers': _hash(repr(sorted(
@@ -338,16 +375,78 @@ def main():
         ))),
         'warnings': _hash(repr(__import__('warnings').filters)),
     }
-    if cache and not overrides and finder.compiled:
+    if cache and request.get('write_cache') and finder.compiled:
+        write_atomic(cache, lambda f: marshal.dump(finder.compiled, f), binary=True)
+    state = {'failures': failures, 'owners': owners}
+    if request.get('write_state'):
+        write_atomic(request['write_state'], lambda f: json.dump(state, f))
+    if base is not None:
+        return {
+            'ok': True,
+            'new_failures': sorted(set(failures) - set(base['failures'])),
+            'changed': diff(base['owners'], owners),
+        }
+    return {'ok': True}
+
+
+def serve():
+    """Answer one request per input line, each in a fresh fork of this process.
+
+    The bytecode cache and baseline state are loaded once here; sqlglot itself is
+    never imported here, so every fork imports its own patched copy from scratch.
+    """
+    config = json.loads(sys.stdin.readline())
+    codes = load_codes(config['cache'])
+    with open(config['baseline']) as f:
+        base = json.load(f)
+    # Standard modules sqlglot imports, loaded before forking so each fork reuses them.
+    for name in ('abc', 'collections', 'contextlib', 'copy', 'dataclasses', 'datetime', 'decimal',
+                 'enum', 'functools', 'heapq', 'inspect', 'itertools', 'logging', 'math', 'numbers',
+                 'operator', 'string', 'textwrap', 'threading', 'time', 'typing', 'uuid', 'warnings'):
         try:
-            temporary = f'{cache}.{os.getpid()}'
-            with open(temporary, 'wb') as f:
-                marshal.dump(finder.compiled, f)
-            os.replace(temporary, cache)
+            importlib.import_module(name)
+        except ImportError:
+            pass
+    sys.stdout.write('{"ready": true}\n')
+    sys.stdout.flush()
+    for line in sys.stdin:
+        if not line.strip():
+            continue
+        request = json.loads(line)
+        request['cache'] = config['cache']
+        read, write = os.pipe()
+        pid = os.fork()
+        if pid == 0:
+            os.close(read)
+            try:
+                result = compute(request, codes, base)
+            except BaseException as error:  # noqa: BLE001
+                result = {'ok': False, 'error': repr(error)}
+            with os.fdopen(write, 'w') as out:
+                out.write(json.dumps(result))
+            os._exit(0)
+        os.close(write)
+        with os.fdopen(read) as answer:
+            text = answer.read()
+        os.waitpid(pid, 0)
+        if not text:
+            text = json.dumps({'ok': False, 'error': 'fingerprint process died'})
+        sys.stdout.write(text.replace('\n', ' ') + '\n')
+        sys.stdout.flush()
+
+
+def write_atomic(path, write, binary=False):
+    temporary = f'{path}.{os.getpid()}'
+    try:
+        with open(temporary, 'wb' if binary else 'w') as f:
+            write(f)
+        os.replace(temporary, path)
+    except OSError:
+        try:
+            os.remove(temporary)
         except OSError:
             pass
-    print(json.dumps({'ok': True, 'failures': failures, 'owners': owners, 'modules': modules_of}))
 
 
 if __name__ == '__main__':
-    main()
+    serve() if sys.argv[1:] == ['--serve'] else main()

@@ -12,5 +12,6 @@
 - [x] Synthetic mutation harness (`tools/mutants.py`) with real test outcomes.
 - [x] Operand-type profile of `is`/`==` comparisons; skip provably equivalent swaps (sample 165.8 s -> 115.6 s).
 - [x] Validate on 364 mutations with real outcomes (sample-like, unseen kinds, swaps): 0 misses.
+- [x] Cut selector CPU about 50% (board run 1: 11.5 s CPU): baseline prepared at build, fork server, targeted compile, memoized scans.
 - [ ] Verify Docker image under competition limits (requires Docker; not installed here).
 - [ ] Rebuild the map on Linux AMD64 in the pinned image and compare with the macOS map.

@@ -6,3 +6,6 @@ __pycache__/
 .venv/
 .obsidian/
 .coverage*
+baseline-code.marshal
+baseline-state.json
+prepared.json
