@@ -1,0 +1,26 @@
+diff --git a/tests/fixtures/optimizer/optimizer.sql b/tests/fixtures/optimizer/optimizer.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/optimizer.sql
++++ b/tests/fixtures/optimizer/optimizer.sql
+@@ -1740,7 +1740,7 @@
+   "x" AS "x"
+     LEFT JOIN "y" AS "y"
+       ON "x"."b" = "y"."b"
+-)
++) 
+ JOIN (
+   "y" AS "z"
+     LEFT JOIN "y" AS "w"
+diff --git a/sqlglot/transforms.py b/sqlglot/transforms.py
+index 0000000..1111111 100644
+--- a/sqlglot/transforms.py
++++ b/sqlglot/transforms.py
+@@ -759,7 +759,7 @@
+                 top_level_with.set("expressions", top_level_with.expressions)
+             else:
+                 top_level_with.set(
+-                    "expressions", top_level_with.expressions + inner_with.expressions
++                    "expressions", top_level_with.expressions - inner_with.expressions
+                 )
+ 
+     return expression

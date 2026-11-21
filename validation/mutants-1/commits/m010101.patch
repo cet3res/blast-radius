@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/core.py b/sqlglot/expressions/core.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/core.py
++++ b/sqlglot/expressions/core.py
+@@ -2496,7 +2496,7 @@
+         from sqlglot.expressions.query import Tuple as _Tuple
+ 
+         return _Tuple(expressions=[convert(v, copy=copy) for v in value])
+-    if isinstance(value, list):
++    if not isinstance(value, list):
+         from sqlglot.expressions.array import Array as _Array
+ 
+         return _Array(expressions=[convert(v, copy=copy) for v in value])

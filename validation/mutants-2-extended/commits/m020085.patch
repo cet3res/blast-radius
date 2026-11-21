@@ -1,0 +1,12 @@
+diff --git a/sqlglot/schema.py b/sqlglot/schema.py
+index 0000000..1111111 100644
+--- a/sqlglot/schema.py
++++ b/sqlglot/schema.py
+@@ -510,7 +510,6 @@
+     def has_column(
+         self,
+         table: exp.Table | str,
+-        column: exp.Column | str,
+         dialect: DialectType = None,
+         normalize: bool | None = None,
+     ) -> bool:

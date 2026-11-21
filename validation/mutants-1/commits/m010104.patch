@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -3308,7 +3308,7 @@
+             kind = "_".join(part for part in (expression.side, expression.kind) if part)
+             return super().join_sql(expression, join_op=f"JOIN BY (TYPE {kind})")
+ 
+-        if (
++        if not (
+             not expression.args.get("using")
+             and not expression.args.get("on")
+             and not expression.args.get("nearest")

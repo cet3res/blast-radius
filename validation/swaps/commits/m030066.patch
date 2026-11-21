@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -3797,7 +3797,7 @@
+         this = f"{this} {'AS' if expression.arg_key == 'windows' else over}"
+ 
+         first = expression.args.get("first")
+-        if first is None:
++        if first == None:
+             first = ""
+         else:
+             first = "FIRST" if first else "LAST"

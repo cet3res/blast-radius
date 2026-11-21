@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/jsonpath/cts.json b/tests/fixtures/jsonpath/cts.json
+index 0000000..1111111 100644
+--- a/tests/fixtures/jsonpath/cts.json
++++ b/tests/fixtures/jsonpath/cts.json
+@@ -6039,7 +6039,7 @@
+         }
+       ],
+       "result": [
+-        {
++   x     {
+           "a": 1,
+           "b": 2
+         }

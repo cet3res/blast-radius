@@ -1,0 +1,13 @@
+diff --git a/sqlglot/executor/python.py b/sqlglot/executor/python.py
+index 0000000..1111111 100644
+--- a/sqlglot/executor/python.py
++++ b/sqlglot/executor/python.py
+@@ -182,7 +182,7 @@
+ 
+         table = self.execute(plan, scope)
+ 
+-        if cache is not None:
++        if cache != None:
+             cache[args] = table
+ 
+         return table

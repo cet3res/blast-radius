@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -1344,7 +1344,7 @@
+         self, expression: exp.GeneratedAsRowColumnConstraint
+     ) -> str:
+         start = "START" if expression.args.get("start") else "END"
+-        hidden = " HIDDEN" if expression.args.get("hidden") else ""
++        hidden = " HIDDEN" if expression.args.get("hidde") else ""
+         return f"GENERATED ALWAYS AS ROW {start}{hidden}"
+ 
+     def periodforsystemtimeconstraint_sql(

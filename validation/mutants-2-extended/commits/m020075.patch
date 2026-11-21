@@ -1,0 +1,12 @@
+diff --git a/sqlglot/optimizer/scope.py b/sqlglot/optimizer/scope.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/scope.py
++++ b/sqlglot/optimizer/scope.py
+@@ -307,6 +307,7 @@
+         List of CTEs in this scope.
+ 
+         Returns:
++        Returns:
+             list[exp.CTE]: ctes
+         """
+         self._ensure_collected()

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/clickhouse.py b/sqlglot/parsers/clickhouse.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/clickhouse.py
++++ b/sqlglot/parsers/clickhouse.py
+@@ -464,7 +464,7 @@
+     }
+ 
+     COLUMN_OPERATORS = {
+-        **{k: v for k, v in parser.Parser.COLUMN_OPERATORS.items() if k != TokenType.PLACEHOLDER},
++        **{k: v for k, v in parser.Parser.COLUMN_OPERATORS.items() if k is not TokenType.PLACEHOLDER},
+         TokenType.DOTCARET: lambda self, this, field: self.expression(
+             exp.NestedJSONSelect(this=this, expression=field)
+         ),

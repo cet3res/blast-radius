@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -5531,6 +5531,7 @@
+         return self.func(
+             "VECTOR_SEARCH",
+             this_sql,
++            this_sql,
+             expression.args.get("column_to_search"),
+             query_table,
+             expression.args.get("query_column_to_search"),

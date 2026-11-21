@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -9361,7 +9361,7 @@
+             if isinstance(parse_result, exp.Expr):
+                 self._add_comments(parse_result)
+             parse_result = parse_method()
+-            if parse_result is not None:
++            if parse_result != None:
+                 items.append(parse_result)
+ 
+         return items

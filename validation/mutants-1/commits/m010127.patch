@@ -1,0 +1,13 @@
+diff --git a/sqlglot/anonymize.py b/sqlglot/anonymize.py
+index 0000000..1111111 100644
+--- a/sqlglot/anonymize.py
++++ b/sqlglot/anonymize.py
+@@ -195,7 +195,7 @@
+         digits_seen = False
+         blanked = []
+         for char in text:
+-            if char.isdigit():
++            if not char.isdigit():
+                 blanked.append("0" if digits_seen else "1")
+                 digits_seen = True
+             else:

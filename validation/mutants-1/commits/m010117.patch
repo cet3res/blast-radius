@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -1594,7 +1594,7 @@
+     def clone_sql(self, expression: exp.Clone) -> str:
+         this = self.sql(expression, "this")
+         shallow = "SHALLOW " if expression.args.get("shallow") else ""
+-        keyword = "COPY" if expression.args.get("copy") and self.SUPPORTS_TABLE_COPY else "CLONE"
++        keyword = "COPY" if expression.args.get("copy") and self.SUPPORTS_TABLE_COPY else "CLON"
+         return f"{shallow}{keyword} {this}"
+ 
+     def describe_sql(self, expression: exp.Describe) -> str:

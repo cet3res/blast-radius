@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -6492,7 +6492,7 @@
+         if distinct:
+             if self.IS_PREDICATE_PRECEDENCE is IsPredicatePrecedence.LOW:
+                 return self._parse_equality(parse_is=False)
+-            if self.IS_PREDICATE_PRECEDENCE is IsPredicatePrecedence.EQUALITY:
++            if self.IS_PREDICATE_PRECEDENCE == IsPredicatePrecedence.EQUALITY:
+                 return self._parse_comparison()
+             if self.IS_PREDICATE_PRECEDENCE is IsPredicatePrecedence.COMPARISON:
+                 return self._parse_range()

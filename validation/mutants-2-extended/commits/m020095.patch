@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/canonicalize_internal_names.py b/sqlglot/optimizer/canonicalize_internal_names.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/canonicalize_internal_names.py
++++ b/sqlglot/optimizer/canonicalize_internal_names.py
+@@ -207,7 +207,7 @@
+ 
+                 # UNNEST stores its offset column outside the alias, including under LATERAL.
+                 unnest = (
+-                    alias_holder.this if isinstance(alias_holder, exp.Lateral) else alias_holder
++                    alias_holder.this if not isinstance(alias_holder, exp.Lateral) else alias_holder
+                 )
+                 if isinstance(unnest, exp.Unnest):
+                     offset_id = unnest.args.get("offset")

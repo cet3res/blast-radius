@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/tsql.py b/sqlglot/generators/tsql.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/tsql.py
++++ b/sqlglot/generators/tsql.py
+@@ -484,6 +484,7 @@
+ 
+     def is_sql(self, expression: exp.Is) -> str:
+         negate = expression.args.get("negate")
++        negate = expression.args.get("negate")
+         if isinstance(expression.expression, exp.Boolean):
+             return self.binary(expression, "<>" if negate else "=")
+         return self.binary(expression, "IS NOT" if negate else "IS")

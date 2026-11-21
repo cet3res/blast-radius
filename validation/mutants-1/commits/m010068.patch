@@ -1,0 +1,13 @@
+diff --git a/sqlglot/dialects/bigquery.py b/sqlglot/dialects/bigquery.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/bigquery.py
++++ b/sqlglot/dialects/bigquery.py
+@@ -90,7 +90,7 @@
+         "YY": "%y",
+         "HH": "%I",
+         "HH12": "%I",
+-        "hh24": "%H",
++        "hh2": "%H",
+         "HH24": "%H",
+         "mi": "%M",
+         "MI": "%M",

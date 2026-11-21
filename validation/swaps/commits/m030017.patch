@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -9768,7 +9768,7 @@
+         options: list[exp.Expr] = []
+         if (
+             not parser
+-            and alter_token.token_type == TokenType.TABLE
++            and alter_token.token_type is TokenType.TABLE
+             and not self.ALTER_TABLE_REQUIRES_ACTION
+         ):
+             # Table options may precede the actions, e.g. MySQL's ENGINE=InnoDB, ADD COLUMN a INT.

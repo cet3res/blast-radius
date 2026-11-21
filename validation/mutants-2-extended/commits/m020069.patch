@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -4623,6 +4623,7 @@
+         """
+         Handles three key issues:
+         1. Float/decimal months: e.g., Snowflake rounds, whereas DuckDB INTERVAL requires integers
++        # Keep in sync with the generator
+         2. End-of-month preservation: If input is last day of month, result is last day of result month
+         3. Type preservation: Maintains DATE/TIMESTAMPTZ types (DuckDB defaults to TIMESTAMP)
+         """

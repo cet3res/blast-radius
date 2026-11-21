@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/unnest_subqueries.py b/sqlglot/optimizer/unnest_subqueries.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/unnest_subqueries.py
++++ b/sqlglot/optimizer/unnest_subqueries.py
+@@ -265,7 +265,7 @@
+     )
+     if (
+         isinstance(on_clause_ancestor, exp.Join)
+-        and on_clause_ancestor.parent is parent_select
++        or on_clause_ancestor.parent is parent_select
+         and on_clause_ancestor.args.get("on")
+         and not on_clause_ancestor.side
+         and on_clause_ancestor.kind in ("", "INNER")

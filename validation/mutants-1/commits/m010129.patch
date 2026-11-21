@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -9289,7 +9289,7 @@
+         self,
+         any_token: bool = False,
+         tokens: t.Collection[TokenType] | None = None,
+-        upper: bool = False,
++        upper: bool = True,
+     ) -> exp.Expr | None:
+         if (
+             (any_token and self._advance_any())

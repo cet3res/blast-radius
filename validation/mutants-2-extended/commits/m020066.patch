@@ -1,0 +1,26 @@
+diff --git a/tests/dialects/test_mysql.py b/tests/dialects/test_mysql.py
+index 0000000..1111111 100644
+--- a/tests/dialects/test_mysql.py
++++ b/tests/dialects/test_mysql.py
+@@ -1573,7 +1573,7 @@
+             },
+             write={
+                 "mysql": "SELECT CONCAT('11', '22')",
+-                "postgres": "SELECT '11' || '22'",
++                "postgres": "SELECT '11' || '22'x",
+             },
+         )
+         self.validate_all(
+diff --git a/tests/fixtures/optimizer/optimizer.sql b/tests/fixtures/optimizer/optimizer.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/optimizer.sql
++++ b/tests/fixtures/optimizer/optimizer.sql
+@@ -942,7 +942,7 @@
+   "tbl" AS "tbl"
+ );
+ 
+-# title: wrapped join of tables without alias
++#  title: wrapped join of tables without alias
+ SELECT a, c FROM (x LEFT JOIN y ON a = c);
+ SELECT
+   "x"."a" AS "a",

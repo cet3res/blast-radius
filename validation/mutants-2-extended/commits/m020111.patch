@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/singlestore.py b/sqlglot/generators/singlestore.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/singlestore.py
++++ b/sqlglot/generators/singlestore.py
+@@ -1455,7 +1455,6 @@
+         if returning is not None:
+             res = exp.Cast(this=res, to=returning)
+ 
+-        return self.sql(res)
+ 
+     def withingroup_sql(self, expression: exp.WithinGroup) -> str:
+         # SingleStore includes trailing NULLs in percentile calculations, so we sort them first

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -6271,7 +6271,7 @@
+ 
+     def columns_sql(self, expression: exp.Columns) -> str:
+         func = self.function_fallback_sql(expression)
+-        if expression.args.get("unpack"):
++        if not expression.args.get("unpack"):
+             func = f"*{func}"
+ 
+         return func

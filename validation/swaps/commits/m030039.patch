@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -4784,7 +4784,7 @@
+         elif self._match_pair(TokenType.OUTER, TokenType.APPLY):
+             cross_apply = False
+ 
+-        if cross_apply is not None:
++        if cross_apply != None:
+             this = self._parse_select(table=True)
+             view = None
+             outer = None

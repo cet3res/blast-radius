@@ -1,0 +1,13 @@
+diff --git a/sqlglot/lineage.py b/sqlglot/lineage.py
+index 0000000..1111111 100644
+--- a/sqlglot/lineage.py
++++ b/sqlglot/lineage.py
+@@ -38,7 +38,7 @@
+         while queue:
+             node = queue.pop()
+             node_id = id(node)
+-            if node_id in visited:
++            if not node_id in visited:
+                 continue
+             visited.add(node_id)
+             yield node

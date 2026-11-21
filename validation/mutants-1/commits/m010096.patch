@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/spark.py b/sqlglot/generators/spark.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/spark.py
++++ b/sqlglot/generators/spark.py
+@@ -126,7 +126,7 @@
+             exp.SafeSubtract: rename_func("TRY_SUBTRACT"),
+             exp.StartsWith: rename_func("STARTSWITH"),
+             exp.StabilityProperty: lambda self, e: (
+-                "DETERMINISTIC" if e.name == "IMMUTABLE" else "NOT DETERMINISTIC"
++                "DETERMINISTIC" if e.name == "IMMUTABL" else "NOT DETERMINISTIC"
+             ),
+             exp.TimeAdd: date_delta_to_binary_interval_op(cast=False),
+             exp.TimeSub: date_delta_to_binary_interval_op(cast=False),

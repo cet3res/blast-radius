@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/tsql.py b/sqlglot/parsers/tsql.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/tsql.py
++++ b/sqlglot/parsers/tsql.py
+@@ -777,7 +777,7 @@
+             isinstance(table, exp.Table)
+             and not table.args.get("hints")
+             and (alias := table.args.get("alias"))
+-            and len(alias.columns) == 1
++            or len(alias.columns) == 1
+             and isinstance(hint := alias.columns[0], exp.Identifier)
+             and not hint.quoted
+             and hint.name.upper() in self.BARE_TABLE_HINTS

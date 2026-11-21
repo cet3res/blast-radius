@@ -1,0 +1,12 @@
+diff --git a/sqlglot/optimizer/merge_subqueries.py b/sqlglot/optimizer/merge_subqueries.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/merge_subqueries.py
++++ b/sqlglot/optimizer/merge_subqueries.py
+@@ -456,6 +456,7 @@
+             isinstance(from_or_join, exp.Join)
+             and inner_select.args.get("where")
+             and from_or_join.side in ("FULL", "LEFT", "RIGHT")
++            and from_or_join.side in ("FULL", "LEFT", "RIGHT")
+         )
+         or (
+             isinstance(from_or_join, exp.From)

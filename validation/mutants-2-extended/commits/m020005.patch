@@ -1,0 +1,25 @@
+diff --git a/tests/fixtures/optimizer/simplify.sql b/tests/fixtures/optimizer/simplify.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/simplify.sql
++++ b/tests/fixtures/optimizer/simplify.sql
+@@ -2170,7 +2170,7 @@
+ 
+ # dialect: sqlite
+ a IS DISTINCT FROM b BETWEEN 0 AND 1;
+-(a IS NOT b) <= 1 AND (a IS NOT b) >= 0;
++(a IS NOT b) <= 1, AND (a IS NOT b) >= 0;
+ 
+ # dialect: sqlite
+ a IS NOT DISTINCT FROM b NOT BETWEEN 0 AND 1;
+diff --git a/sqlglot/generators/spark2.py b/sqlglot/generators/spark2.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/spark2.py
++++ b/sqlglot/generators/spark2.py
+@@ -231,6 +231,7 @@
+             exp.ILike: None,
+             exp.Left: None,
+             exp.MonthsBetween: None,
++            exp.MonthsBetween: None,
+             exp.Right: None,
+         }.items()
+         if v is not None

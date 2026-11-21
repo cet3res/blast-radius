@@ -1,0 +1,14 @@
+diff --git a/sqlglot/dialects/dialect.py b/sqlglot/dialects/dialect.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/dialect.py
++++ b/sqlglot/dialects/dialect.py
+@@ -1835,8 +1835,8 @@
+     - Fractional part = (DAY(date1) - DAY(date2)) / 31
+     - Special case: If both dates are last day of month, fractional part = 0
+ 
++    """
+     Formula: DATEDIFF('month', date2, date1) + (DAY(date1) - DAY(date2)) / 31.0
+-    """
+     date1 = expression.this
+     date2 = expression.expression
+ 

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -3468,7 +3468,7 @@
+             lock_type = "SHARE"
+         elif self._match_text_seq("READ"):
+             lock_type = "READ"
+-        elif self._match_text_seq("WRITE"):
++        elif self._match_text_seq("WRITEx"):
+             lock_type = "WRITE"
+         elif self._match_text_seq("CHECKSUM"):
+             lock_type = "CHECKSUM"

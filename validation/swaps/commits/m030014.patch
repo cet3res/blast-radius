@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/core.py b/sqlglot/expressions/core.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/core.py
++++ b/sqlglot/expressions/core.py
+@@ -1020,7 +1020,7 @@
+                 for k, v in meta.items():
+                     if type(v) not in _IMMUTABLE_META_TYPES:
+                         meta[k] = deepcopy(v)
+-            if node._hash is not None:
++            if node._hash != None:
+                 copy._hash = node._hash
+ 
+             for k, vs in node.args.items():

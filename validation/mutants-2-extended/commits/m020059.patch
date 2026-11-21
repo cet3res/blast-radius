@@ -1,0 +1,12 @@
+diff --git a/sqlglot/expressions/datatypes.py b/sqlglot/expressions/datatypes.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/datatypes.py
++++ b/sqlglot/expressions/datatypes.py
+@@ -194,6 +194,7 @@
+ 
+     STRUCT_TYPES: t.ClassVar[set[DType]] = {
+         DType.FILE,
++        DType.FILE,
+         DType.NESTED,
+         DType.OBJECT,
+         DType.STRUCT,

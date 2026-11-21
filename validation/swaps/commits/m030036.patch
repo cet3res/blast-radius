@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -1392,7 +1392,7 @@
+ 
+ def _ceil_floor(self: DuckDBGenerator, expression: exp.Floor | exp.Ceil) -> str:
+     scaled_sql = _scale_rounding_sql(self, expression, type(expression))
+-    if scaled_sql is not None:
++    if scaled_sql != None:
+         return scaled_sql
+     return self.ceil_floor(expression)
+ 

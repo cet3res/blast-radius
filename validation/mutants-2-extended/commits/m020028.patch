@@ -1,0 +1,14 @@
+diff --git a/tests/dialects/test_hive.py b/tests/dialects/test_hive.py
+index 0000000..1111111 100644
+--- a/tests/dialects/test_hive.py
++++ b/tests/dialects/test_hive.py
+@@ -433,8 +433,8 @@
+         self.validate_all(
+             "a REGEXP 'x'",
+             write={
++                "exasol": "a REGEXP_LIKE '.*x.*'",
+                 "duckdb": "REGEXP_MATCHES(a, 'x')",
+-                "exasol": "a REGEXP_LIKE '.*x.*'",
+                 "presto": "REGEXP_LIKE(a, 'x')",
+                 "hive": "a RLIKE 'x'",
+                 "spark": "a RLIKE 'x'",

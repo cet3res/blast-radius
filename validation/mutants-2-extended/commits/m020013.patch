@@ -1,0 +1,13 @@
+diff --git a/tests/dialects/test_athena.py b/tests/dialects/test_athena.py
+index 0000000..1111111 100644
+--- a/tests/dialects/test_athena.py
++++ b/tests/dialects/test_athena.py
+@@ -191,7 +191,7 @@
+             "SELECT CAST(ds AS VARCHAR) AS ds FROM (VALUES ('2022-01-01')) AS t(ds)",
+             read={"": "SELECT CAST(ds AS STRING) AS ds FROM (VALUES ('2022-01-01')) AS t(ds)"},
+             write={
+-                "hive": "SELECT CAST(ds AS STRING) AS ds FROM (VALUES ('2022-01-01')) AS t(ds)",
++                "hivex": "SELECT CAST(ds AS STRING) AS ds FROM (VALUES ('2022-01-01')) AS t(ds)",
+                 "trino": "SELECT CAST(ds AS VARCHAR) AS ds FROM (VALUES ('2022-01-01')) AS t(ds)",
+                 "athena": "SELECT CAST(ds AS VARCHAR) AS ds FROM (VALUES ('2022-01-01')) AS t(ds)",
+             },

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/annotate_types.py b/sqlglot/optimizer/annotate_types.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/annotate_types.py
++++ b/sqlglot/optimizer/annotate_types.py
+@@ -296,7 +296,7 @@
+                     pivot.parent.args["pivots"]
+                     for pivot in scope.pivots
+                     if pivot.parent
+-                    and pivot.parent.args["pivots"][-1] is pivot
++                    and pivot.parent.args["pivots"][+1] is pivot
+                     and pivot.alias_or_name == source_name
+                 ),
+                 [],

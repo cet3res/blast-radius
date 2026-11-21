@@ -1,0 +1,448 @@
+{
+ "commits": {
+  "m030000": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030001": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030002": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030003": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030004": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030005": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030006": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030007": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030008": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030009": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030010": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030011": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030012": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030013": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030014": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030015": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030016": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030017": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030018": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030019": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030020": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030021": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030022": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030023": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030024": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030025": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030026": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030027": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030028": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030029": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030030": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030031": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030032": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030033": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030034": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030035": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030036": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030037": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030038": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030039": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030040": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030041": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030042": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030043": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030044": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030045": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030046": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030047": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030048": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030049": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030050": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030051": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030052": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030053": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030054": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030055": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030056": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030057": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030058": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030059": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030060": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030061": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030062": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030063": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030064": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030065": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030066": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030067": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030068": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030069": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030070": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030071": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030072": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030073": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030074": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030075": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030076": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030077": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030078": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030079": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030080": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030081": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030082": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030083": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030084": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030085": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030086": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030087": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030088": {
+   "failing": [],
+   "kind": "swap-agree"
+  },
+  "m030089": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030090": {
+   "failing": [
+    93,
+    1011
+   ],
+   "kind": "swap-disagree"
+  },
+  "m030091": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030092": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030093": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030094": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030095": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030096": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030097": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030098": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030099": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030100": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030101": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030102": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030103": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030104": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030105": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030106": {
+   "failing": [
+    342,
+    343
+   ],
+   "kind": "swap-disagree"
+  },
+  "m030107": {
+   "failing": [],
+   "kind": "swap-disagree"
+  },
+  "m030108": {
+   "failing": [
+    636
+   ],
+   "kind": "swap-disagree"
+  }
+ }
+}

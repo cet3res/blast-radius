@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -5463,7 +5463,7 @@
+         return self._ml_sql(expression, "PREDICT")
+ 
+     def generateembedding_sql(self, expression: exp.GenerateEmbedding) -> str:
+-        name = "GENERATE_TEXT_EMBEDDING" if expression.args.get("is_text") else "GENERATE_EMBEDDING"
++        name = "GENERATE_TEXT_EMBEDDINGx" if expression.args.get("is_text") else "GENERATE_EMBEDDING"
+         return self._ml_sql(expression, name)
+ 
+     def generatetext_sql(self, expression: exp.GenerateText) -> str:

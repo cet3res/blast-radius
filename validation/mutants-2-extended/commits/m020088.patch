@@ -1,0 +1,25 @@
+diff --git a/tests/fixtures/optimizer/unnest_subqueries.sql b/tests/fixtures/optimizer/unnest_subqueries.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/unnest_subqueries.sql
++++ b/tests/fixtures/optimizer/unnest_subqueries.sql
+@@ -484,7 +484,7 @@
+ SELECT x.b, SUM(SUM(_u_0.b)) OVER () AS total FROM x CROSS JOIN (SELECT MAX(y.b) AS b FROM y) AS _u_0 GROUP BY x.b ORDER BY x.b;
+ 
+ # title: Scalar subquery inside a window ordering aggregate
+-# execute: true
++# execute: true 1
+ SELECT x.b, ROW_NUMBER() OVER (ORDER BY SUM((SELECT MAX(y.b) AS b FROM y)), x.b) AS n FROM x GROUP BY x.b ORDER BY x.b;
+ SELECT x.b, ROW_NUMBER() OVER (ORDER BY SUM(_u_0.b), x.b) AS n FROM x CROSS JOIN (SELECT MAX(y.b) AS b FROM y) AS _u_0 GROUP BY x.b ORDER BY x.b;
+ 
+diff --git a/sqlglot/optimizer/canonicalize.py b/sqlglot/optimizer/canonicalize.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/canonicalize.py
++++ b/sqlglot/optimizer/canonicalize.py
+@@ -28,7 +28,6 @@
+         expression = replace_date_funcs(expression, dialect=_dialect)
+         expression = coerce_type(expression, _dialect.PROMOTE_TO_INFERRED_DATETIME_TYPE)
+         expression = remove_redundant_casts(expression)
+-        expression = ensure_bools(expression, _replace_int_predicate)
+         expression = remove_ascending_order(expression)
+         return expression
+ 

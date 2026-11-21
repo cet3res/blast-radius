@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/snowflake.py b/sqlglot/parsers/snowflake.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/snowflake.py
++++ b/sqlglot/parsers/snowflake.py
+@@ -513,7 +513,7 @@
+         "BIT_ORAGG": exp.BitwiseOrAgg.from_arg_list,
+         "BITXORAGG": exp.BitwiseXorAgg.from_arg_list,
+         "BITXOR_AGG": exp.BitwiseXorAgg.from_arg_list,
+-        "BIT_XOR_AGG": exp.BitwiseXorAgg.from_arg_list,
++        "BIT_XOR_AG": exp.BitwiseXorAgg.from_arg_list,
+         "BIT_XORAGG": exp.BitwiseXorAgg.from_arg_list,
+         "BITMAP_OR_AGG": exp.BitmapOrAgg.from_arg_list,
+         "BOOLAND": lambda args: exp.Booland(

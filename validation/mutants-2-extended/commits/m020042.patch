@@ -1,0 +1,12 @@
+diff --git a/sqlglot/typing/spark.py b/sqlglot/typing/spark.py
+index 0000000..1111111 100644
+--- a/sqlglot/typing/spark.py
++++ b/sqlglot/typing/spark.py
+@@ -49,7 +49,6 @@
+             exp.Overlay,
+         }
+     },
+-    exp.BitmapCount: {"returns": exp.DType.BIGINT},
+     exp.Grouping: {"returns": exp.DType.TINYINT},
+     exp.Localtimestamp: {"returns": exp.DType.TIMESTAMPNTZ},
+ }

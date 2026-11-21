@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/annotate_types.py b/sqlglot/optimizer/annotate_types.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/annotate_types.py
++++ b/sqlglot/optimizer/annotate_types.py
+@@ -569,7 +569,7 @@
+             isinstance(column_types, dict)
+             and column_types
+             and all(
+-                kind is not None
++                kind != None
+                 and not exp.DataType.build(kind, copy=False).is_type(exp.DType.UNKNOWN)
+                 for kind in column_types.values()
+             )

@@ -1,0 +1,25 @@
+diff --git a/sqlglot/typing/__init__.py b/sqlglot/typing/__init__.py
+index 0000000..1111111 100644
+--- a/sqlglot/typing/__init__.py
++++ b/sqlglot/typing/__init__.py
+@@ -197,7 +197,6 @@
+             exp.DayOfWeek,
+             exp.DayOfYear,
+             exp.Getbit,
+-            exp.Hour,
+             exp.TimestampDiff,
+             exp.TimeDiff,
+             exp.Unicode,
+diff --git a/tests/fixtures/optimizer/qualify_tables.sql b/tests/fixtures/optimizer/qualify_tables.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/qualify_tables.sql
++++ b/tests/fixtures/optimizer/qualify_tables.sql
+@@ -341,7 +341,7 @@
+ 
+ # title: Qualify LATERAL SPLIT_TO_TABLE() with alias on table and columns
+ # dialect: snowflake
+-SELECT v FROM t, LATERAL SPLIT_TO_TABLE(t.a, '.') AS s(x, y, v);
++SELECT  v FROM t, LATERAL SPLIT_TO_TABLE(t.a, '.') AS s(x, y, v);
+ SELECT v FROM C.DB.t AS T, LATERAL SPLIT_TO_TABLE(t.a, '.') AS s(x, y, v);
+ 
+ # title: Qualify JSONB_TO_RECORDSET with typed alias columns and canonicalize_table_aliases

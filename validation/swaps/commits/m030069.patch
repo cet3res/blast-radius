@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -5642,7 +5642,7 @@
+     def _parse_pivot_aggregation(self) -> exp.Expr | None:
+         func = self._parse_function()
+         if not func:
+-            if self._prev.token_type == TokenType.COMMA:
++            if self._prev.token_type is TokenType.COMMA:
+                 return None
+             self.raise_error("Expecting an aggregation function in PIVOT")
+ 

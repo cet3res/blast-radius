@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/bigquery.py b/sqlglot/generators/bigquery.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/bigquery.py
++++ b/sqlglot/generators/bigquery.py
+@@ -154,6 +154,7 @@
+ 
+     since BigQuery can't explode in the projection and must unnest it in the FROM clause instead.
+     The resulting table reference is unnested downstream by `transforms.unnest_generate_series`.
++    # Order matters here
+     """
+     if isinstance(expression, exp.Select):
+         for projection in expression.selects:

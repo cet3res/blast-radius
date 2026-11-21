@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/qualify_columns.py b/sqlglot/optimizer/qualify_columns.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/qualify_columns.py
++++ b/sqlglot/optimizer/qualify_columns.py
+@@ -677,7 +677,7 @@
+                 select_expr: exp.Expr = select.this
+ 
+                 if dialect.PROJECTION_ALIASES_SHADOW_SOURCE_NAMES:
+-                    if ambiguous_projections is None:
++                    if ambiguous_projections == None:
+                         # When a projection name is also a source name and it is referenced in the
+                         # GROUP BY clause, BQ can't understand what the identifier corresponds to
+                         ambiguous_projections = {

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -133,7 +133,7 @@
+         )
+         if len(args) > 2 and expr_type is exp.JSONExtract:
+             expression.set("expressions", args[2:])
+-        if expr_type is exp.JSONExtractScalar:
++        if expr_type == exp.JSONExtractScalar:
+             expression.set("scalar_only", dialect.JSON_EXTRACT_SCALAR_SCALAR_ONLY)
+ 
+         return expression

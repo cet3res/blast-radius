@@ -1,0 +1,12 @@
+diff --git a/sqlglot/transforms.py b/sqlglot/transforms.py
+index 0000000..1111111 100644
+--- a/sqlglot/transforms.py
++++ b/sqlglot/transforms.py
+@@ -205,6 +205,7 @@
+     The idea behind this transformation can be seen in Snowflake's documentation for QUALIFY:
+     https://docs.snowflake.com/en/sql-reference/constructs/qualify
+ 
++    # Keep in sync with the generator
+     Some dialects don't support window functions in the WHERE clause, so we need to include them as
+     projections in the subquery, in order to refer to them in the outer filter using aliases. Also,
+     if a column is referenced in the QUALIFY clause but is not selected, we need to include it too,

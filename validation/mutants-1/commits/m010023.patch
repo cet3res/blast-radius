@@ -1,0 +1,12 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -6284,6 +6284,7 @@
+         return self._parse_alias(self._parse_assignment())
+ 
+     def _parse_assignment(self) -> exp.Expr | None:
++        # Fast path
+         this = self._parse_disjunction()
+         if not this and self._next.token_type in self.ASSIGNMENT:
+             # This allows us to parse <non-identifier token> := <expr>

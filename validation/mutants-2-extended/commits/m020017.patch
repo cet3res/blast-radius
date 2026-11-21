@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/singlestore.py b/sqlglot/parsers/singlestore.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/singlestore.py
++++ b/sqlglot/parsers/singlestore.py
+@@ -226,7 +226,7 @@
+         "REPRODUCTION": _show_parser("REPRODUCTION"),
+         "RESOURCE POOLS": _show_parser("RESOURCE POOLS"),
+         "ROLES": _show_parser("ROLES"),
+-        "ROLES FOR USER": _show_parser("ROLES FOR USER", target=True),
++        "ROLES FOR USER": _show_parser("ROLES FOR USERx", target=True),
+         "ROLES FOR GROUP": _show_parser("ROLES FOR GROUP", target=True),
+         "STATUS EXTENDED": _show_parser("STATUS EXTENDED"),
+         "USERS": _show_parser("USERS"),

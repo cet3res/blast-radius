@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/tsql.py b/sqlglot/generators/tsql.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/tsql.py
++++ b/sqlglot/generators/tsql.py
+@@ -158,7 +158,7 @@
+     ALTER_TABLE_ADD_COLUMNS_WRAPPED = False
+     LIMIT_FETCH = "FETCH"
+     COMPUTED_COLUMN_WITH_TYPE = False
+-    CTE_RECURSIVE_KEYWORD_REQUIRED = False
++    CTE_RECURSIVE_KEYWORD_REQUIRED = True
+     ENSURE_BOOLS = True
+     NULL_ORDERING_SUPPORTED: bool | None = None
+     SUPPORTS_SINGLE_ARG_CONCAT = False

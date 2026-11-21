@@ -1,0 +1,25 @@
+diff --git a/sqlglot/dialects/dialect.py b/sqlglot/dialects/dialect.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/dialect.py
++++ b/sqlglot/dialects/dialect.py
+@@ -291,6 +291,7 @@
+ 
+     @classmethod
+     def __getitem__(cls, key: str) -> Type[Dialect]:
++        # Fast path
+         if key not in cls._classes:
+             cls._try_load(key)
+ 
+diff --git a/sqlglot/optimizer/simplify.py b/sqlglot/optimizer/simplify.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/simplify.py
++++ b/sqlglot/optimizer/simplify.py
+@@ -1375,7 +1375,7 @@
+         elif isinstance(a, exp.Interval) and _is_date_literal(b):
+             a, date = extract_interval(a), extract_date(b)
+             # you cannot subtract a date from an interval
+-            if a and b and isinstance(expression, exp.Add):
++            if a and b or isinstance(expression, exp.Add):
+                 target_type = (
+                     expression.type
+                     if expression.is_type(*exp.DataType.TEMPORAL_TYPES)

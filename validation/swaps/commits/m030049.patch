@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -6159,7 +6159,7 @@
+         kind = kind_token.text if kind_token else None
+ 
+         if not self._match_set(self.SET_OPERATIONS) or (
+-            intersect_only and self._prev.token_type != TokenType.INTERSECT
++            intersect_only and self._prev.token_type is not TokenType.INTERSECT
+         ):
+             self._retreat(start)
+             return None

@@ -1,0 +1,14 @@
+diff --git a/tests/dialects/test_dialect.py b/tests/dialects/test_dialect.py
+index 0000000..1111111 100644
+--- a/tests/dialects/test_dialect.py
++++ b/tests/dialects/test_dialect.py
+@@ -3131,8 +3131,8 @@
+         for expression, types, dialect, expected in [
+             (typed_div, (None, None), typed_div_dialect, "a / b"),
+             (typed_div, (None, None), div_dialect, "a / b"),
++            (div, (None, None), div_dialect, "a / b"),
+             (div, (None, None), typed_div_dialect, "CAST(a AS DOUBLE) / b"),
+-            (div, (None, None), div_dialect, "a / b"),
+             (typed_div, (INT, INT), typed_div_dialect, "a / b"),
+             (typed_div, (INT, INT), div_dialect, "CAST(a / b AS BIGINT)"),
+             (div, (INT, INT), typed_div_dialect, "CAST(a AS DOUBLE) / b"),

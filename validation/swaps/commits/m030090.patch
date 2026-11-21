@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/tsql.py b/sqlglot/parsers/tsql.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/tsql.py
++++ b/sqlglot/parsers/tsql.py
+@@ -197,7 +197,7 @@
+     if kind in ("SHA", "SHA1"):
+         args.pop(0)
+         return exp.SHA1Digest(this=data)
+-    if kind == "SHA2_256":
++    if kind is "SHA2_256":
+         return exp.SHA2Digest(this=data, length=exp.Literal.number(256))
+     if kind == "SHA2_512":
+         return exp.SHA2Digest(this=data, length=exp.Literal.number(512))

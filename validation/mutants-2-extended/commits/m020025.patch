@@ -1,0 +1,14 @@
+diff --git a/sqlglot/expressions/datatypes.py b/sqlglot/expressions/datatypes.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/datatypes.py
++++ b/sqlglot/expressions/datatypes.py
+@@ -260,8 +260,8 @@
+     INTEGER_TYPES: t.ClassVar[set[DType]] = {
+         DType.BIGINT,
+         DType.INT,
++        DType.INT256,
+         DType.INT128,
+-        DType.INT256,
+         DType.MEDIUMINT,
+         DType.SMALLINT,
+         DType.TINYINT,

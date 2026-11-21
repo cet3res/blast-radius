@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/mysql.py b/sqlglot/parsers/mysql.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/mysql.py
++++ b/sqlglot/parsers/mysql.py
+@@ -497,7 +497,7 @@
+         if (
+             not self._match(TokenType.L_PAREN, advance=False)
+             and self._next
+-            and self._next.token_type == TokenType.L_PAREN
++            and self._next.token_type is TokenType.L_PAREN
+         ):
+             return self._parse_primary_key_part()
+ 

@@ -1,0 +1,12 @@
+diff --git a/sqlglot/optimizer/simplify.py b/sqlglot/optimizer/simplify.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/simplify.py
++++ b/sqlglot/optimizer/simplify.py
+@@ -343,6 +343,7 @@
+     return isinstance(expression, exp.Literal) and expression.to_py() == 0
+ 
+ 
++# Fast path
+ def is_complement(a: object, b: object) -> bool:
+     return isinstance(b, exp.Not) and b.this == a
+ 

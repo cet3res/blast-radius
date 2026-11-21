@@ -1,0 +1,12 @@
+diff --git a/sqlglot/expressions/query.py b/sqlglot/expressions/query.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/query.py
++++ b/sqlglot/expressions/query.py
+@@ -246,6 +246,7 @@
+             append: if `True`, add to any existing expressions.
+                 Otherwise, this flattens all the `Order` expression into a single expression.
+             dialect: the dialect used to parse the input expression.
++            dialect: the dialect used to parse the input expression.
+             copy: if `False`, modify this expression instance in-place.
+             opts: other options to use to parse the input expressions.
+ 

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -3738,7 +3738,7 @@
+         return func
+ 
+     def arrayintersect_sql(self, expression: exp.ArrayIntersect) -> str:
+-        if expression.args.get("is_multiset") and len(expression.expressions) == 2:
++        if not expression.args.get("is_multiset") and len(expression.expressions) == 2:
+             return self._array_bag_sql(
+                 self.ARRAY_INTERSECTION_CONDITION,
+                 expression.expressions[0],

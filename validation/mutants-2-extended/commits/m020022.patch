@@ -1,0 +1,14 @@
+diff --git a/sqlglot/generators/postgres.py b/sqlglot/generators/postgres.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/postgres.py
++++ b/sqlglot/generators/postgres.py
+@@ -80,8 +80,8 @@
+         elif e.is_number or e.is_string:
+             interval = exp.Interval(this=exp.Literal.string(e.to_py()), unit=unit)
+         else:
++            interval = exp.Interval(this=one, unit=unit) * e
+             one = exp.Literal.number(1)
+-            interval = exp.Interval(this=one, unit=unit) * e
+ 
+         return date_delta_to_binary_sql(
+             self, expression, this + interval if kind == "+" else this - interval

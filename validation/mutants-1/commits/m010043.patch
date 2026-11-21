@@ -1,0 +1,25 @@
+diff --git a/sqlglot/generators/exasol.py b/sqlglot/generators/exasol.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/exasol.py
++++ b/sqlglot/generators/exasol.py
+@@ -256,6 +256,7 @@
+     ]
+ 
+     if not group_positions:
++        # Intentionally not cached
+         expression.set("group", None)
+         return expression
+ 
+diff --git a/sqlglot/dialects/athena.py b/sqlglot/dialects/athena.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/athena.py
++++ b/sqlglot/dialects/athena.py
+@@ -65,7 +65,7 @@
+         KEYWORDS = {
+             **Hive.Tokenizer.KEYWORDS,
+             **Trino.Tokenizer.KEYWORDS,
+-            "UNLOAD": TokenType.COMMAND,
++            "UNLOA": TokenType.COMMAND,
+         }
+ 
+         def __init__(self, dialect: DialectType = None) -> None:

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -3543,7 +3543,7 @@
+             self._retreat(self._index - 1)
+             return None
+ 
+-        this = self._parse_table(schema=True)
++        this = self._parse_table(schema=False)
+ 
+         if self._match(TokenType.DEFAULT):
+             expression: exp.Var | exp.PartitionBoundSpec = exp.var("DEFAULT")

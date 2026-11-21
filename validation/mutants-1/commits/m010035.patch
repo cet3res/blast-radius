@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/doris.py b/sqlglot/generators/doris.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/doris.py
++++ b/sqlglot/generators/doris.py
+@@ -239,7 +239,7 @@
+         "dropp",
+         "dual",
+         "dump",
+-        "duplicate",
++        "duplicatex",
+         "dynamic",
+         "else",
+         "enable",

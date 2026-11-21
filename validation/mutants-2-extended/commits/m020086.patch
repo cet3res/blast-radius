@@ -1,0 +1,14 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -6534,8 +6534,8 @@
+     def xmltable_sql(self, expression: exp.XMLTable) -> str:
+         this = self.sql(expression, "this")
+         namespaces = self.expressions(expression, key="namespaces")
++        passing = self.expressions(expression, key="passing")
+         namespaces = f"XMLNAMESPACES({namespaces}), " if namespaces else ""
+-        passing = self.expressions(expression, key="passing")
+         passing = f"{self.sep()}PASSING{self.seg(passing)}" if passing else ""
+         columns = self.expressions(expression, key="columns")
+         columns = f"{self.sep()}COLUMNS{self.seg(columns)}" if columns else ""

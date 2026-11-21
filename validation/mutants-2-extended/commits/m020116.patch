@@ -1,0 +1,13 @@
+diff --git a/tests/dialects/test_duckdb.py b/tests/dialects/test_duckdb.py
+index 0000000..1111111 100644
+--- a/tests/dialects/test_duckdb.py
++++ b/tests/dialects/test_duckdb.py
+@@ -1888,7 +1888,7 @@
+                 "hive": "SELECT DATE_ADD('2018-01-01 00:00:00', 3)",
+             },
+             write={
+-                "duckdb": "SELECT CAST('2018-01-01 00:00:00' AS DATE) + INTERVAL '3' DAY",
++                "duckd": "SELECT CAST('2018-01-01 00:00:00' AS DATE) + INTERVAL '3' DAY",
+                 "hive": "SELECT CAST('2018-01-01 00:00:00' AS DATE) + INTERVAL '3' DAY",
+             },
+         )

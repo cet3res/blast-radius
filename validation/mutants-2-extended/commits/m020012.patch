@@ -1,0 +1,25 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -2092,7 +2092,6 @@
+             ELSE MAP_FROM_ENTRIES(LIST_FILTER(LIST_TRANSFORM(
+                 LIST_DISTINCT(LIST_CONCAT(MAP_KEYS(:map1), MAP_KEYS(:map2))),
+                 __k -> STRUCT_PACK(key := __k, value := COALESCE(:map2[__k], :map1[__k]))
+-            ), __x -> __x.value IS NOT NULL))
+         END
+         """
+     )
+diff --git a/tests/fixtures/optimizer/tpc-h/tpc-h.sql b/tests/fixtures/optimizer/tpc-h/tpc-h.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/tpc-h/tpc-h.sql
++++ b/tests/fixtures/optimizer/tpc-h/tpc-h.sql
+@@ -319,7 +319,7 @@
+         lineitem
+ where
+         CAST(l_shipdate AS DATE) >= date '1994-01-01'
+-        and CAST(l_shipdate AS DATE) < date '1994-01-01' + interval '1' year
++         and CAST(l_shipdate AS DATE) < date '1994-01-01' + interval '1' year
+         and l_discount between 0.06 - 0.01 and 0.06 + 0.01
+         and l_quantity < 24;
+ SELECT

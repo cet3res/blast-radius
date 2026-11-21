@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/duckdb.py b/sqlglot/parsers/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/duckdb.py
++++ b/sqlglot/parsers/duckdb.py
+@@ -51,7 +51,7 @@
+ def _build_date_trunc(args: list) -> exp.DateTrunc | exp.TimestampTrunc:
+     trunc = date_trunc_to_time(args)
+     unit = trunc.args.get("unit")
+-    if isinstance(unit, (exp.Literal, exp.Var)) and map_date_part(unit).name.upper() == "CENTURY":
++    if isinstance(unit, (exp.Literal, exp.Var)) and map_date_part(unit).name.upper() is "CENTURY":
+         # DuckDB truncates centuries to multiples of 100, rather than years 1, 101, etc.
+         trunc.set("century_from_zero", True)
+     return trunc

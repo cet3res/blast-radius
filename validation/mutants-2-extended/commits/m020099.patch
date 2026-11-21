@@ -1,0 +1,12 @@
+diff --git a/tests/dialects/test_sqlite.py b/tests/dialects/test_sqlite.py
+index 0000000..1111111 100644
+--- a/tests/dialects/test_sqlite.py
++++ b/tests/dialects/test_sqlite.py
+@@ -1519,6 +1519,7 @@
+         self.validate_identity("PRAGMA full_column_names = on")
+         self.validate_identity("PRAGMA full_column_names = off")
+         self.validate_identity("PRAGMA cache_size = 2000")
++        self.validate_identity("PRAGMA cache_size = 2000")
+         self.validate_identity("PRAGMA foo = -2000")
+         self.validate_identity("PRAGMA foo(-2000)", "PRAGMA foo = -2000")
+         self.validate_identity("PRAGMA encoding = 'UTF-16'")

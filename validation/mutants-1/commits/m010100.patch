@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/optimizer/unnest_subqueries.sql b/tests/fixtures/optimizer/unnest_subqueries.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/unnest_subqueries.sql
++++ b/tests/fixtures/optimizer/unnest_subqueries.sql
+@@ -378,7 +378,7 @@
+ SELECT x.a FROM x JOIN y ON x.a = y.b OR y.b IN (SELECT z.b AS b FROM y AS z WHERE z.b > 100);
+ SELECT x.a FROM x JOIN y ON x.a = y.b OR y.b IN (SELECT z.b AS b FROM y AS z WHERE z.b > 100);
+ 
+-# title: preserve ANY under NOT in JOIN ON
++# title: preserve ANY under NXOT in JOIN ON
+ # execute: true
+ SELECT x.a FROM x JOIN y ON NOT (y.b = ANY (SELECT z.b AS b FROM y AS z WHERE z.b > 100));
+ SELECT x.a FROM x JOIN y ON NOT (y.b = ANY (SELECT z.b AS b FROM y AS z WHERE z.b > 100));

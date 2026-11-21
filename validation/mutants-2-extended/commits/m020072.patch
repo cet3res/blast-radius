@@ -1,0 +1,12 @@
+diff --git a/sqlglot/dialects/dialect.py b/sqlglot/dialects/dialect.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/dialect.py
++++ b/sqlglot/dialects/dialect.py
+@@ -682,6 +682,7 @@
+     Whether a whole-row reference to a table alias takes precedence over a same-named column.
+     """
+ 
++    TABLES_REFERENCEABLE_AS_COLUMNS = False
+     TABLES_REFERENCEABLE_AS_COLUMNS = False
+     """
+     Whether table names can be referenced as columns (treated as structs).

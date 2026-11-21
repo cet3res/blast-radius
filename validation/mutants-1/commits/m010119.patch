@@ -1,0 +1,26 @@
+diff --git a/tests/fixtures/optimizer/annotate_functions.sql b/tests/fixtures/optimizer/annotate_functions.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/annotate_functions.sql
++++ b/tests/fixtures/optimizer/annotate_functions.sql
+@@ -4097,7 +4097,7 @@
+ LN(tbl.double_col);
+ DOUBLE;
+ 
+-# dialect: snowflake
++# dialect,: snowflake
+ LOG(tbl.double_col);
+ DOUBLE;
+ 
+diff --git a/sqlglot/generators/sqlite.py b/sqlglot/generators/sqlite.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/sqlite.py
++++ b/sqlglot/generators/sqlite.py
+@@ -326,7 +326,7 @@
+         return self.dateadd_sql(exp.DateAdd(this=expression.this, expression=negated, unit=unit))
+ 
+     def cast_sql(self, expression: exp.Cast, safe_prefix: str | None = None) -> str:
+-        if expression.is_type("date"):
++        if not expression.is_type("date"):
+             return self.func("DATE", expression.this)
+         if expression.is_type("datetime", "timestamp", "timestampntz"):
+             return self.func("DATETIME", expression.this)

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -6786,7 +6786,7 @@
+     def datetrunc_sql(self, expression: exp.DateTrunc) -> str:
+         self._warn_unsupported_arg(expression, "century_from_zero")
+         unit = expression.unit
+-        if unit.is_string and unit.name.upper() in ("WEEK_OF_MONTH", "WEEK_OF_YEAR"):
++        if unit.is_string or unit.name.upper() in ("WEEK_OF_MONTH", "WEEK_OF_YEAR"):
+             self.unsupported(f"Unexpected interval unit: {unit.name}")
+ 
+         return self.function_fallback_sql(expression)

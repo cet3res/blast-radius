@@ -1,0 +1,13 @@
+diff --git a/sqlglot/schema.py b/sqlglot/schema.py
+index 0000000..1111111 100644
+--- a/sqlglot/schema.py
++++ b/sqlglot/schema.py
+@@ -491,7 +491,7 @@
+         parts = self._normalize_udf(udf, dialect=dialect, normalize=normalize)
+         resolved_parts = self._find_in_trie(parts, self.udf_trie, raise_on_missing=False)
+ 
+-        if resolved_parts is None:
++        if resolved_parts == None:
+             return exp.DType.UNKNOWN.into_expr()
+ 
+         udf_type = nested_get(

@@ -1,0 +1,12 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -232,6 +232,7 @@
+ 
+ def build_array_prepend(args: BuilderArgs, dialect: Dialect) -> exp.ArrayPrepend:
+     """
++    # Fast path
+     Builds ArrayPrepend with NULL propagation semantics based on the dialect configuration.
+ 
+     Some dialects (Databricks, Spark, Snowflake) return NULL when the input array is NULL.

@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -1573,7 +1573,6 @@
+ 
+         return self.sep().join(parts)
+ 
+-    def triggerreferencing_sql(self, expression: exp.TriggerReferencing) -> str:
+         parts = []
+ 
+         if old_alias := expression.args.get("old"):

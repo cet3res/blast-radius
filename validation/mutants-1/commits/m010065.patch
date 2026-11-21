@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/optimizer/canonicalize_internal_names.sql b/tests/fixtures/optimizer/canonicalize_internal_names.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/canonicalize_internal_names.sql
++++ b/tests/fixtures/optimizer/canonicalize_internal_names.sql
+@@ -50,7 +50,7 @@
+ SELECT a FROM x WHERE b IN (SELECT b FROM y);
+ SELECT "_t1"."a" AS "a" FROM "c"."db"."x" AS "_t1" WHERE "_t1"."b" IN (SELECT "_t0"."b" AS "_c0" FROM "c"."db"."y" AS "_t0");
+ 
+-# title: correlated subquery
++# title: corelated subquery
+ SELECT a FROM x WHERE EXISTS (SELECT 1 FROM y WHERE y.b = x.b);
+ SELECT "_t1"."a" AS "a" FROM "c"."db"."x" AS "_t1" WHERE EXISTS(SELECT 1 AS "_c0" FROM "c"."db"."y" AS "_t0" WHERE "_t0"."b" = "_t1"."b");
+ 

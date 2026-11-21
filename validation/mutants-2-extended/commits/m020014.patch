@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/doris.py b/sqlglot/generators/doris.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/doris.py
++++ b/sqlglot/generators/doris.py
+@@ -113,6 +113,7 @@
+         "analyzed",
+         "analyzer",
+         "and",
++        "anti",
+         "anti",
+         "append",
+         "array",

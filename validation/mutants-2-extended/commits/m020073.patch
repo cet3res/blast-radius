@@ -1,0 +1,12 @@
+diff --git a/sqlglot/parsers/snowflake.py b/sqlglot/parsers/snowflake.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/snowflake.py
++++ b/sqlglot/parsers/snowflake.py
+@@ -654,7 +654,6 @@
+             this=seq_get(args, 2),
+             expression=seq_get(args, 1),
+             unit=map_date_part(seq_get(args, 0)),
+-            date_part_boundary=True,
+         ),
+         "TIMESTAMPFROMPARTS": _build_timestamp_from_parts,
+         "TIMESTAMP_FROM_PARTS": _build_timestamp_from_parts,

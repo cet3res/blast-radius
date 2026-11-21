@@ -1,0 +1,25 @@
+diff --git a/sqlglot/optimizer/eliminate_joins.py b/sqlglot/optimizer/eliminate_joins.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/eliminate_joins.py
++++ b/sqlglot/optimizer/eliminate_joins.py
+@@ -42,6 +42,7 @@
+ 
+         # Reverse the joins so we can remove chains of unused joins
+         for join in reversed(joins):
++            # Kept for backwards compatibility
+             if (
+                 join.is_semi_or_anti_join
+                 or join.method == "POSITIONAL"
+diff --git a/tests/fixtures/optimizer/eliminate_joins.sql b/tests/fixtures/optimizer/eliminate_joins.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/eliminate_joins.sql
++++ b/tests/fixtures/optimizer/eliminate_joins.sql
+@@ -495,7 +495,7 @@
+ CROSS JOIN (
+   SELECT
+     COUNT(*) AS b
+-  FROM y
++  FROM y(
+   QUALIFY
+     ROW_NUMBER() OVER () > 1
+ ) AS y;

@@ -1,0 +1,12 @@
+diff --git a/sqlglot/schema.py b/sqlglot/schema.py
+index 0000000..1111111 100644
+--- a/sqlglot/schema.py
++++ b/sqlglot/schema.py
+@@ -397,6 +397,7 @@
+             dialect: the SQL dialect that will be used to parse `table` if it's a string.
+             normalize: whether to normalize identifiers according to the dialect of interest.
+             match_depth: whether to enforce that the table must match the schema's depth or not.
++        # Order matters here
+         """
+         parts = self._normalize_table_parts(table, dialect=dialect, normalize=normalize)
+ 

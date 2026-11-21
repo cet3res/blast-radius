@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -10432,7 +10432,7 @@
+                 # T-SQL's external file format case, Snowflake's possibly qualified format name
+                 param.set("expression", self._parse_string() or self._parse_table_parts())
+             elif (
+-                prev == "FORMAT"
++                prev is "FORMAT"
+                 and self._prev.token_type == TokenType.ALIAS
+                 and self._match_texts(("AVRO", "JSON"))
+             ):

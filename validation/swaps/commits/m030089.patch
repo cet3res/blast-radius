@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -3565,7 +3565,7 @@
+                 self.unsupported(f"REGEXP_REPLACE occurrence={occurrence} not supported")
+             # flag duckdb to do either all or none, single_replace check is for duckdb round trip
+             elif (
+-                occurrence == 0
++                occurrence is 0
+                 and "g" not in validated_flags
+                 and not expression.args.get("single_replace")
+             ):

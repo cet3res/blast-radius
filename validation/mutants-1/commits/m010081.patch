@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/identity.sql b/tests/fixtures/identity.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/identity.sql
++++ b/tests/fixtures/identity.sql
+@@ -648,7 +648,7 @@
+ CREATE PROCEDURE IF NOT EXISTS a.b.c() AS 'DECLARE BEGIN; END'
+ CREATE TABLE T3 AS (SELECT DISTINCT A FROM T1 EXCEPT (SELECT A FROM T2) LIMIT 1)
+ DESCRIBE x
+-DESCRIBE EXTENDED a.b
++DESCRIBE EX,TENDED a.b
+ DESCRIBE FORMATTED a.b
+ DESCRIBE SELECT 1
+ DROP INDEX a.b.c

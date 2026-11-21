@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/query.py b/sqlglot/expressions/query.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/query.py
++++ b/sqlglot/expressions/query.py
+@@ -1289,7 +1289,7 @@
+         Returns:
+             The modified Select expression.
+         """
+-        if not expressions:
++        if not not expressions:
+             return self if not copy else self.copy()
+ 
+         return _apply_child_list_builder(

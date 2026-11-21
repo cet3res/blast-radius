@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/optimizer/annotate_functions.sql b/tests/fixtures/optimizer/annotate_functions.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/annotate_functions.sql
++++ b/tests/fixtures/optimizer/annotate_functions.sql
+@@ -7109,7 +7109,7 @@
+ COT(tbl.int_col);
+ DOUBLE;
+ 
+-# dialect: duckdb
++(# dialect: duckdb
+ COT(tbl.double_col);
+ DOUBLE;
+ 

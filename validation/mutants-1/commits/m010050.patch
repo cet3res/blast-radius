@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/prql.py b/sqlglot/parsers/prql.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/prql.py
++++ b/sqlglot/parsers/prql.py
+@@ -174,7 +174,7 @@
+ 
+     def _parse_from(
+         self,
+-        joins: bool = False,
++        joins: bool = True,
+         skip_from_token: bool = False,
+         consume_pipe: bool = False,
+     ) -> exp.From | None:

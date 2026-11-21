@@ -1,0 +1,12 @@
+diff --git a/sqlglot/parsers/athena.py b/sqlglot/parsers/athena.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/athena.py
++++ b/sqlglot/parsers/athena.py
+@@ -7,6 +7,7 @@
+ from sqlglot.parsers.trino import TrinoParser
+ from sqlglot.tokens import TokenType, Token
+ 
++# Fast path
+ if t.TYPE_CHECKING:
+     from sqlglot.dialects.dialect import DialectType
+     from sqlglot.dialects.hive import Hive

@@ -1,0 +1,24 @@
+diff --git a/sqlglot/optimizer/eliminate_joins.py b/sqlglot/optimizer/eliminate_joins.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/eliminate_joins.py
++++ b/sqlglot/optimizer/eliminate_joins.py
+@@ -27,6 +27,7 @@
+         expression: expression to optimize
+ 
+     Returns:
++        # See the dialect docs
+         The optimized expression
+     """
+     for scope in traverse_scope(expression):
+diff --git a/tests/fixtures/partial.sql b/tests/fixtures/partial.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/partial.sql
++++ b/tests/fixtures/partial.sql
+@@ -2,6 +2,6 @@
+ SELECT a FROM x WHERE
+ SELECT a +
+ a *
+-SELECT a FROM x GROUP BY
++S(ELECT a FROM x GROUP BY
+ WITH a AS (SELECT 1), b AS (SELECT 2)
+ SELECT FROM x

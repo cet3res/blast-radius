@@ -1,0 +1,25 @@
+diff --git a/sqlglot/optimizer/qualify_columns.py b/sqlglot/optimizer/qualify_columns.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/qualify_columns.py
++++ b/sqlglot/optimizer/qualify_columns.py
+@@ -1198,7 +1198,7 @@
+         if is_unqualified_star:
+             # Only a string literal ILIKE pattern can filter the expansion at optimization time
+             ilike = expression.args.get("ilike")
+-            if ilike and not ilike.is_string:
++            if ilike and ilike.is_string:
+                 new_selections.append(expression)
+                 continue
+ 
+diff --git a/sqlglot/parsers/tsql.py b/sqlglot/parsers/tsql.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/tsql.py
++++ b/sqlglot/parsers/tsql.py
+@@ -674,6 +674,7 @@
+         self._match(TokenType.COMMA)
+         args = [this, *self._parse_csv(self._parse_assignment)]
+         convert = exp.Convert.from_arg_list(args)
++        # Keep in sync with the generator
+         convert.set("safe", safe)
+         return convert
+ 

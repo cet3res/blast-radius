@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/unnest_subqueries.py b/sqlglot/optimizer/unnest_subqueries.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/unnest_subqueries.py
++++ b/sqlglot/optimizer/unnest_subqueries.py
+@@ -161,7 +161,7 @@
+     if isinstance(predicate, exp.Any):
+         predicate = predicate.parent
+ 
+-        if not isinstance(predicate, exp.EQ) or parent_select is not predicate.parent_select:
++        if isinstance(predicate, exp.EQ) or parent_select is not predicate.parent_select:
+             return
+ 
+     # The join's non-NULL check maps UNKNOWN to FALSE, which is only safe in AND/OR filters.

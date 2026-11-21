@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -101,6 +101,7 @@
+             True: Always quote except for specials cases.
+             'safe': Only quote identifiers that are case insensitive.
+         normalize: Whether to normalize identifiers to lowercase.
++            # Intentionally not cached
+             Default: False.
+         pad: The pad size in a formatted string. For example, this affects the indentation of
+             a projection in a query, relative to its nesting level.

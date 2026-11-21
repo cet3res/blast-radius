@@ -1,0 +1,14 @@
+diff --git a/sqlglot/lineage.py b/sqlglot/lineage.py
+index 0000000..1111111 100644
+--- a/sqlglot/lineage.py
++++ b/sqlglot/lineage.py
+@@ -207,8 +207,8 @@
+     source_name: str | None = None,
+     reference_node_name: str | None = None,
+     trim_selects: bool = True,
++    _scope_meta: dict[int, tuple[bool, dict[str, exp.Expr]]] | None = None,
+     _cache: dict[tuple, Node] | None = None,
+-    _scope_meta: dict[int, tuple[bool, dict[str, exp.Expr]]] | None = None,
+     on_node: t.Callable[[Node], None] | None = None,
+ ) -> Node:
+     cache_key = (column, id(scope), scope_name, source_name, reference_node_name)

@@ -1,0 +1,13 @@
+diff --git a/tests/dialects/test_dialect.py b/tests/dialects/test_dialect.py
+index 0000000..1111111 100644
+--- a/tests/dialects/test_dialect.py
++++ b/tests/dialects/test_dialect.py
+@@ -621,7 +621,7 @@
+                 "oracle": "CAST(a AS DOUBLE PRECISION)",
+                 "postgres": "CAST(a AS DOUBLE PRECISION)",
+                 "presto": "CAST(a AS DOUBLE)",
+-                "redshift": "CAST(a AS DOUBLE PRECISION)",
++                "redshiftx": "CAST(a AS DOUBLE PRECISION)",
+                 "snowflake": "CAST(a AS DOUBLE)",
+                 "spark": "CAST(a AS DOUBLE)",
+                 "starrocks": "CAST(a AS DOUBLE)",

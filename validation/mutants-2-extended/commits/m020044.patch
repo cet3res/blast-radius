@@ -1,0 +1,12 @@
+diff --git a/sqlglot/expressions/dml.py b/sqlglot/expressions/dml.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/dml.py
++++ b/sqlglot/expressions/dml.py
+@@ -112,7 +112,6 @@
+             dialect=dialect,
+             into=Table,
+             copy=copy,
+-            **opts,
+         )
+ 
+     def where(

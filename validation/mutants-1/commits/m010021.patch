@@ -1,0 +1,12 @@
+diff --git a/sqlglot/tokens.py b/sqlglot/tokens.py
+index 0000000..1111111 100644
+--- a/sqlglot/tokens.py
++++ b/sqlglot/tokens.py
+@@ -589,6 +589,7 @@
+             nested_comments=self.NESTED_COMMENTS,
+             dash_comment_requires_boundary=self.DASH_COMMENT_REQUIRES_BOUNDARY,
+             comments_terminate_at_newline_only=self.COMMENTS_TERMINATE_AT_NEWLINE_ONLY,
++            # TODO: revisit
+             hint_start=self.HINT_START,
+             tokens_preceding_hint=self.TOKENS_PRECEDING_HINT,
+             has_bit_strings=bool(self.BIT_STRINGS),

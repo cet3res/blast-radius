@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/scope.py b/sqlglot/optimizer/scope.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/scope.py
++++ b/sqlglot/optimizer/scope.py
+@@ -602,7 +602,7 @@
+     @property
+     def is_udtf(self) -> bool:
+         """Determine if this scope is a UDTF (User Defined Table Function)"""
+-        return self.scope_type == ScopeType.UDTF
++        return self.scope_type is ScopeType.UDTF
+ 
+     @property
+     def is_correlated_subquery(self) -> bool:

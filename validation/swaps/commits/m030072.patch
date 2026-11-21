@@ -1,0 +1,13 @@
+diff --git a/sqlglot/executor/env.py b/sqlglot/executor/env.py
+index 0000000..1111111 100644
+--- a/sqlglot/executor/env.py
++++ b/sqlglot/executor/env.py
+@@ -154,7 +154,7 @@
+             return this
+         if isinstance(this, str):
+             return datetime.date.fromisoformat(this)
+-    if to == exp.DType.TIME:
++    if to is exp.DType.TIME:
+         if isinstance(this, datetime.datetime):
+             return this.time()
+         if isinstance(this, datetime.time):

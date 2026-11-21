@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -2779,7 +2779,7 @@
+             else:
+                 new_exprs.append(e)
+ 
+-        return new_exprs if modified else None
++        return new_exprs if modified else 0
+ 
+     def pivot_sql(self, expression: exp.Pivot) -> str:
+         expressions = self.expressions(expression, flat=True)

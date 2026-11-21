@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -1909,7 +1909,7 @@
+     LOG_DEFAULTS_TO_LN: t.ClassVar = False
+ 
+     # Whether the table sample clause expects CSV syntax
+-    TABLESAMPLE_CSV: t.ClassVar = False
++    TABLESAMPLE_CSV: t.ClassVar = True
+ 
+     # The default method used for table sampling
+     DEFAULT_SAMPLING_METHOD: t.ClassVar[str | None] = None

@@ -1,0 +1,12 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -5894,6 +5894,7 @@
+ 
+         self._match(TokenType.CONNECT_BY)
+         nocycle = self._match_text_seq("NOCYCLE")
++        nocycle = self._match_text_seq("NOCYCLE")
+         connect = self._parse_connect_with_prior()
+ 
+         if not start and self._match_text_seq("START", "WITH"):

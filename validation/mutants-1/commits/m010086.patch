@@ -1,0 +1,12 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -5176,6 +5176,7 @@
+             if isinstance(table, exp.Identifier):
+                 table.args["this"] += "*"
+             else:
++                # Fast path
+                 table = exp.Identifier(this="*")
+ 
+         if is_db_reference:

@@ -1,0 +1,12 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -3752,6 +3752,7 @@
+         else:
+             if self._match_set((TokenType.FIRST, TokenType.ALL)):
+                 comments += ensure_list(self._prev_comments)
++                comments += ensure_list(self._prev_comments)
+                 return self._parse_multitable_inserts(comments)
+ 
+             # Oracle's conditional form defaults to ALL when the keyword is omitted

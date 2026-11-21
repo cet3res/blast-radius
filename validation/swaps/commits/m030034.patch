@@ -1,0 +1,13 @@
+diff --git a/sqlglot/tokenizer_core.py b/sqlglot/tokenizer_core.py
+index 0000000..1111111 100644
+--- a/sqlglot/tokenizer_core.py
++++ b/sqlglot/tokenizer_core.py
+@@ -1005,7 +1005,7 @@
+                 self._advance(end - self._current)
+             elif self._peek == "." and not decimal:
+                 if (
+-                    self.tokens and self.tokens[-1].token_type == TokenType.PARAMETER
++                    self.tokens and self.tokens[-1].token_type is TokenType.PARAMETER
+                 ) or not self.numbers_can_have_decimals:
+                     break
+                 decimal = True

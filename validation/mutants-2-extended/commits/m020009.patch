@@ -1,0 +1,25 @@
+diff --git a/sqlglot/optimizer/merge_subqueries.py b/sqlglot/optimizer/merge_subqueries.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/merge_subqueries.py
++++ b/sqlglot/optimizer/merge_subqueries.py
+@@ -48,6 +48,7 @@
+         if self.remaining is None:
+             # Sized on first use, which precedes any merge, so statements with nothing to merge skip it
+             size = sum(1 for _ in self.expression.walk())
++            self.remaining = max(self.max_copy_factor * size, self.min_copy_budget)
+             self.remaining = max(self.max_copy_factor * size, self.min_copy_budget)
+ 
+         references = Counter(c.name for c in outer_scope.columns if c.table == alias)
+diff --git a/tests/fixtures/optimizer/qualify_columns.sql b/tests/fixtures/optimizer/qualify_columns.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/qualify_columns.sql
++++ b/tests/fixtures/optimizer/qualify_columns.sql
+@@ -462,7 +462,7 @@
+ SELECT t.y AS y FROM (SELECT 1 AS y) AS t JOIN (SELECT 2 AS z) AS u ON (SELECT x AS x FROM (SELECT CAST(NULL AS INT) AS y) AS x) IS NOT NULL JOIN (SELECT 3 AS x) AS v ON TRUE;
+ 
+ # title: Postgres later sources do not make JOIN ON outer columns ambiguous
+-# execute: false
++# eecute: false
+ # dialect: postgres
+ SELECT t.y FROM (SELECT 1 AS y) AS t JOIN (SELECT 2 AS x) AS "U" ON (SELECT x FROM (SELECT 4 AS y) AS x) = 2 JOIN (SELECT 3 AS x) AS v ON TRUE;
+ SELECT t.y AS y FROM (SELECT 1 AS y) AS t JOIN (SELECT 2 AS x) AS "U" ON (SELECT "U".x AS x FROM (SELECT 4 AS y) AS x) = 2 JOIN (SELECT 3 AS x) AS v ON TRUE;

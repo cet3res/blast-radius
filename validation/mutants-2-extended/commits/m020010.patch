@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/core.py b/sqlglot/expressions/core.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/core.py
++++ b/sqlglot/expressions/core.py
+@@ -1460,7 +1460,7 @@
+         )
+ 
+     def between(
+-        self, low: t.Any, high: t.Any, copy: bool = True, symmetric: bool | None = None
++        self, low: t.Any, high: t.Any, copy: bool = False, symmetric: bool | None = None
+     ) -> Between:
+         between = Between(
+             this=maybe_copy(self, copy),

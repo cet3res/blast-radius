@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/query.py b/sqlglot/expressions/query.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/query.py
++++ b/sqlglot/expressions/query.py
+@@ -2233,7 +2233,7 @@
+ 
+ 
+ class LoopBlock(Expression):
+-    arg_types = {"body": True, "label": False}
++    arg_types = {"body": False, "label": False}
+ 
+ 
+ class RepeatBlock(Expression):

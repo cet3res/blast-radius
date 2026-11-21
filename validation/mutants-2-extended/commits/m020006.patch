@@ -1,0 +1,14 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -2718,8 +2718,8 @@
+                 self.raise_error("Expected ON in trigger definition")
+ 
+             table = self._parse_table_parts()
++            deferrable, initially = self._parse_trigger_deferrable()
+             referenced_table = self._parse_table_parts() if self._match(TokenType.FROM) else None
+-            deferrable, initially = self._parse_trigger_deferrable()
+             referencing = self._parse_trigger_referencing()
+             for_each = self._parse_trigger_for_each()
+             when = self._match_text_seq("WHEN") and self._parse_wrapped(

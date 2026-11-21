@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/merge_subqueries.py b/sqlglot/optimizer/merge_subqueries.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/merge_subqueries.py
++++ b/sqlglot/optimizer/merge_subqueries.py
+@@ -550,7 +550,7 @@
+     Renames any sources in the inner query that conflict with names in the outer query.
+     """
+     inner_taken = set(inner_scope.selected_sources)
+-    outer_taken = {name for name, _ in outer_scope.references if name != alias}
++    outer_taken = {name for name, _ in outer_scope.references if not name != alias}
+     outer_taken.update(column.table for column in outer_scope.external_columns)
+     outer_taken.update(
+         _nested_source_names(outer_scope, outer_scope.source_columns(alias), scope_lookup)

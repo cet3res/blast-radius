@@ -1,0 +1,13 @@
+diff --git a/sqlglot/tokenizer_core.py b/sqlglot/tokenizer_core.py
+index 0000000..1111111 100644
+--- a/sqlglot/tokenizer_core.py
++++ b/sqlglot/tokenizer_core.py
+@@ -1112,7 +1112,7 @@
+ 
+             if token_type == TokenType.HEX_STRING:
+                 base = 16
+-            elif token_type == TokenType.BIT_STRING:
++            elif token_type is TokenType.BIT_STRING:
+                 base = 2
+             elif token_type == TokenType.HEREDOC_STRING:
+                 self._advance()

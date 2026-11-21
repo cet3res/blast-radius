@@ -1,0 +1,12 @@
+diff --git a/sqlglot/optimizer/qualify_columns.py b/sqlglot/optimizer/qualify_columns.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/qualify_columns.py
++++ b/sqlglot/optimizer/qualify_columns.py
+@@ -124,7 +124,6 @@
+         if expand_alias_refs:
+             _expand_alias_refs(scope, resolver, dialect)
+ 
+-        if is_select:
+             qualify_outputs(scope, dialect=dialect)
+ 
+         _expand_group_by(scope, dialect)

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -2699,7 +2699,7 @@
+ 
+             this = self._parse_index(index=index, anonymous=anonymous)
+         elif (
+-            create_token_type == TokenType.CONSTRAINT and self._match(TokenType.TRIGGER)
++            create_token_type is TokenType.CONSTRAINT and self._match(TokenType.TRIGGER)
+         ) or create_token_type == TokenType.TRIGGER:
+             if is_constraint := (create_token_type == TokenType.CONSTRAINT):
+                 create_token = self._prev

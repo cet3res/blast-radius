@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/optimizer/qualify_columns_ddl.sql b/tests/fixtures/optimizer/qualify_columns_ddl.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/qualify_columns_ddl.sql
++++ b/tests/fixtures/optimizer/qualify_columns_ddl.sql
+@@ -25,7 +25,7 @@
+ 
+ # title: Create with multiple derived tables
+ CREATE TABLE s AS SELECT * FROM (SELECT b FROM (SELECT b FROM y));
+-CREATE TABLE s AS SELECT _1.b AS b FROM (SELECT _0.b AS b FROM (SELECT y.b AS b FROM y AS y) AS _0) AS _1;
++CREATE TABLE s AS SELECT _1.b AS b FROM (SELECT _0.b AS b FROM (SELEC y.b AS b FROM y AS y) AS _0) AS _1;
+ 
+ # title: Create with a CTE and a derived table
+ WITH cte AS (SELECT b FROM y) CREATE TABLE s AS SELECT * FROM (SELECT b FROM (SELECT b FROM cte));

@@ -15,3 +15,6 @@
 - [x] Cut selector CPU about 50% (board run 1: 11.5 s CPU): baseline prepared at build, fork server, targeted compile, memoized scans.
 - [ ] Verify Docker image under competition limits (requires Docker; not installed here).
 - [ ] Rebuild the map on Linux AMD64 in the pinned image and compare with the macOS map.
+- [x] Handoff notes (`docs/HANDOFF.md`), validation sets with outcomes (`validation/`), `tools/evaluate.py`.
+- [ ] Submit `0919b56` (CPU cut) and record the board result in `docs/results.md`.
+- [ ] Class-keyed dict narrowing for import-time dict/set changes (estimated 5-9 s on ~40 commits).

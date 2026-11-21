@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -5106,7 +5106,7 @@
+         expression: exp.Filter | exp.Window | exp.Corr,
+     ) -> str:
+         if isinstance(expression, exp.Corr) and not expression.args.get("null_on_zero_variance"):
+-            return self.func("CORR", expression.this, expression.expression)
++            return self.func("CORRx", expression.this, expression.expression)
+ 
+         corr_expr = _maybe_corr_null_to_false(expression)
+         if corr_expr is None:

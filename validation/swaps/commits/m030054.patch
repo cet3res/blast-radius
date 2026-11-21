@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -1031,7 +1031,7 @@
+         if self.pretty:
+             sql = sql.replace(self.SENTINEL_LINE_BREAK, "\n")
+ 
+-        if self.unsupported_level == ErrorLevel.IGNORE:
++        if self.unsupported_level is ErrorLevel.IGNORE:
+             return sql
+ 
+         if self.unsupported_level == ErrorLevel.WARN:

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/helpers.py b/sqlglot/optimizer/helpers.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/helpers.py
++++ b/sqlglot/optimizer/helpers.py
+@@ -3,7 +3,7 @@
+ from sqlglot import exp
+ from sqlglot.optimizer.scope import find_in_scope, walk_in_scope
+ 
+-WINDOW_HAS_AGGREGATE = "window_has_aggregate"
++WINDOW_HAS_AGGREGATE = "window_has_aggregat"
+ 
+ 
+ def is_implicit_group_by_all(select: exp.Select) -> bool:

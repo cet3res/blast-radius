@@ -1,0 +1,12 @@
+diff --git a/sqlglot/expressions/builders.py b/sqlglot/expressions/builders.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/builders.py
++++ b/sqlglot/expressions/builders.py
+@@ -299,6 +299,7 @@
+ 
+     Returns:
+         Merge: The syntax tree for the MERGE statement.
++        Merge: The syntax tree for the MERGE statement.
+     """
+     expressions: list[Expr] = []
+     for when_expr in when_exprs:

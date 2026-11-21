@@ -1,0 +1,13 @@
+diff --git a/tests/test_optimizer.py b/tests/test_optimizer.py
+index 0000000..1111111 100644
+--- a/tests/test_optimizer.py
++++ b/tests/test_optimizer.py
+@@ -4207,7 +4207,7 @@
+             cte_select.expressions[1].type.this, exp.DataType.Type.TEXT
+         )  # y.colb AS colb
+         self.assertEqual(
+-            cte_select.expressions[2].type.this, exp.DataType.Type.BOOLEAN
++            cte_select.expressions[3].type.this, exp.DataType.Type.BOOLEAN
+         )  # y.colc AS colc
+ 
+         cte_select_addition = cte_select.expressions[0].this  # x.cola + 'bla'

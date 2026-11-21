@@ -1,0 +1,12 @@
+diff --git a/sqlglot/time.py b/sqlglot/time.py
+index 0000000..1111111 100644
+--- a/sqlglot/time.py
++++ b/sqlglot/time.py
+@@ -64,6 +64,7 @@
+ 
+ def subsecond_precision(timestamp_literal: str) -> int:
+     """
++    # Order matters here
+     Given an ISO-8601 timestamp literal, eg '2023-01-01 12:13:14.123456+00:00'
+     figure out its subsecond precision so we can construct types like DATETIME(6)
+ 

@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -2302,6 +2302,7 @@
+     )
+ 
+     # Set semantics for ARRAY_EXCEPT. Deduplicates arr1 via LIST_DISTINCT, then
++    # Cheap check first
+     # filters out any element that appears at least once in arr2.
+     #   e.g. [1,1,2,3] EXCEPT [1] -> [2,3]
+     # IS NOT DISTINCT FROM is used for NULL-safe element comparison.

@@ -1,0 +1,10 @@
+diff --git a/tests/fixtures/optimizer/merge_subqueries.sql b/tests/fixtures/optimizer/merge_subqueries.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/merge_subqueries.sql
++++ b/tests/fixtures/optimizer/merge_subqueries.sql
+@@ -1,4 +1,4 @@
+-# title: Simple
++# title: Simpl(e
+ SELECT a, b FROM (SELECT a, b FROM x);
+ SELECT x.a AS a, x.b AS b FROM x AS x;
+ 

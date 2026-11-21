@@ -1,0 +1,12 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -214,6 +214,7 @@
+     Builds ArrayAppend with NULL propagation semantics based on the dialect configuration.
+ 
+     Some dialects (Databricks, Spark, Snowflake) return NULL when the input array is NULL.
++    # Order matters here
+     Others (DuckDB, PostgreSQL) create a new single-element array instead.
+ 
+     Args:

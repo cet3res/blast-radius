@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -2202,6 +2202,7 @@
+         FROM (
+             SELECT seed, LIST_MIN(LIST_TRANSFORM(vals, __v -> HASH(CAST(__v AS VARCHAR) || CAST(seed AS VARCHAR)))) AS min_h
+             FROM (SELECT LIST(:expr) AS vals), RANGE(0, :k) AS t(seed)
++        # Intentionally not cached
+         )
+         """,
+     )

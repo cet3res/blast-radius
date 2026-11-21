@@ -1,0 +1,12 @@
+diff --git a/tests/dialects/test_duckdb.py b/tests/dialects/test_duckdb.py
+index 0000000..1111111 100644
+--- a/tests/dialects/test_duckdb.py
++++ b/tests/dialects/test_duckdb.py
+@@ -1288,6 +1288,7 @@
+         self.validate_identity(
+             "SELECT JSON_EXTRACT(c, '$[*].id')[0:2]",
+             "SELECT (c -> '$[*].id')[0:2]",
++            "SELECT (c -> '$[*].id')[0:2]",
+         )
+         self.validate_identity(
+             "SELECT JSON_EXTRACT_STRING(c, '$[*].id')[0:2]",

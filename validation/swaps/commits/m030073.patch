@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/simplify.py b/sqlglot/optimizer/simplify.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/simplify.py
++++ b/sqlglot/optimizer/simplify.py
+@@ -322,7 +322,7 @@
+     """
+     if isinstance(expression, exp.Connector) and (
+         isinstance(parent, exp.Not)
+-        or (isinstance(parent, exp.Connector) and type(parent) is not type(expression))
++        or (isinstance(parent, exp.Connector) and type(parent) != type(expression))
+     ):
+         return exp.paren(expression, copy=False)
+ 

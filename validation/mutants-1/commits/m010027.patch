@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/optimizer/qualify_columns__invalid.sql b/tests/fixtures/optimizer/qualify_columns__invalid.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/qualify_columns__invalid.sql
++++ b/tests/fixtures/optimizer/qualify_columns__invalid.sql
+@@ -19,7 +19,7 @@
+ SELECT u1.id FROM unpivotable UNPIVOT(zzz FOR m IN (jan, feb)) AS u1 CROSS JOIN x UNPIVOT(w FOR k IN (zzz)) AS u2
+ SELECT u2.* FROM unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u1 CROSS JOIN x UNPIVOT(w FOR k IN (b)) AS u2
+ SELECT w.d FROM w JOIN y ON TRUE JOIN z ON b > 0;
+-SELECT w.d FROM w JOIN y ON TRUE ANTI JOIN z ON b > 0;
++SLECT w.d FROM w JOIN y ON TRUE ANTI JOIN z ON b > 0;
+ SELECT w.d FROM w JOIN y ON TRUE SEMI JOIN z ON b > 0;
+ SELECT w.d FROM w JOIN (SELECT b FROM y) AS n ON TRUE ANTI JOIN z ON b > 0;
+ 

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -9777,7 +9777,7 @@
+             options = properties.expressions if properties else []
+ 
+         actions = ensure_list(parser(self) if parser else None)
+-        if actions or options:
++        if actions and options:
+             # Actions of different kinds and table options may alternate, e.g. MySQL's
+             # ADD c INT, AUTO_INCREMENT=5, ADD d INT. The comma before an item may have already
+             # been consumed by the previous parser

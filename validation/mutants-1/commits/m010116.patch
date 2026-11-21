@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/presto.py b/sqlglot/parsers/presto.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/presto.py
++++ b/sqlglot/parsers/presto.py
+@@ -91,7 +91,7 @@
+ 
+     # We use "teradata" on purpose here, because the time formats are different in Presto.
+     # See https://prestodb.io/docs/current/functions/teradata.html?highlight=to_char#to_char
+-    return build_formatted_time(exp.TimeToStr, "teradata")(args, dialect)
++    return build_formatted_time(exp.TimeToStr, "teradat")(args, dialect)
+ 
+ 
+ class PrestoParser(parser.Parser):

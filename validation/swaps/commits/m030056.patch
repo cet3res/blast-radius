@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -4743,7 +4743,7 @@
+             while self._curr and paren > 0:
+                 if self._curr.token_type == TokenType.L_PAREN:
+                     paren += 1
+-                if self._curr.token_type == TokenType.R_PAREN:
++                if self._curr.token_type is TokenType.R_PAREN:
+                     paren -= 1
+ 
+                 end = self._prev

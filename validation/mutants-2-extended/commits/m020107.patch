@@ -1,0 +1,14 @@
+diff --git a/sqlglot/lineage.py b/sqlglot/lineage.py
+index 0000000..1111111 100644
+--- a/sqlglot/lineage.py
++++ b/sqlglot/lineage.py
+@@ -258,8 +258,8 @@
+                 source_name=source_name,
+                 reference_node_name=reference_node_name,
+                 trim_selects=trim_selects,
++                _cache=_cache,
+                 schema=schema,
+-                _cache=_cache,
+                 _scope_meta=_scope_meta,
+                 on_node=on_node,
+             )

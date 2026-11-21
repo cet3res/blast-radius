@@ -1,0 +1,24 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -1669,7 +1669,6 @@
+     SET_PARSERS: t.ClassVar = {
+         "GLOBAL": lambda self: self._parse_set_item_assignment("GLOBAL"),
+         "LOCAL": lambda self: self._parse_set_item_assignment("LOCAL"),
+-        "SESSION": lambda self: self._parse_set_item_assignment("SESSION"),
+         "TRANSACTION": lambda self: self._parse_set_transaction(),
+     }
+ 
+diff --git a/sqlglot/generators/presto.py b/sqlglot/generators/presto.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/presto.py
++++ b/sqlglot/generators/presto.py
+@@ -136,6 +136,7 @@
+     of MATCH_RECOGNIZE, so we need to preserve them in that case. In all other cases
+     they're converted into an ARBITRARY call.
+ 
++    # Order matters here
+     Reference: https://trino.io/docs/current/sql/match-recognize.html#logical-navigation-functions
+     """
+     if isinstance(expression.find_ancestor(exp.MatchRecognize, exp.Select), exp.MatchRecognize):

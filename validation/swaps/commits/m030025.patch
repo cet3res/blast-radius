@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -1357,7 +1357,7 @@
+ 
+     def primarykeycolumnconstraint_sql(self, expression: exp.PrimaryKeyColumnConstraint) -> str:
+         desc = expression.args.get("desc")
+-        if desc is not None:
++        if desc != None:
+             return f"PRIMARY KEY{' DESC' if desc else ' ASC'}"
+         options = self.expressions(expression, key="options", flat=True, sep=" ")
+         options = f" {options}" if options else ""

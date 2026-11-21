@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/pushdown_projections.py b/sqlglot/optimizer/pushdown_projections.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/pushdown_projections.py
++++ b/sqlglot/optimizer/pushdown_projections.py
+@@ -502,7 +502,7 @@
+             new_pos = {id(selection): i + 1 for i, selection in enumerate(subset)}
+             for node, old_selection in ordinal_refs:
+                 pos = new_pos.get(id(old_selection))
+-                if pos is not None and int(node.this) != pos:
++                if pos != None and int(node.this) != pos:
+                     if journal is not None:
+                         record(journal, node, "this")
+ 

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -2937,7 +2937,7 @@
+ 
+     def _parse_trigger_referencing_clause(self, keyword: str) -> exp.Expr | None:
+         if not self._match_text_seq(keyword):
+-            return None
++            return 0
+         if not self._match_text_seq("TABLE"):
+             self.raise_error(f"Expected TABLE after {keyword} in REFERENCING clause")
+         self._match_text_seq("AS")

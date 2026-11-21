@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/qualify_columns.py b/sqlglot/optimizer/qualify_columns.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/qualify_columns.py
++++ b/sqlglot/optimizer/qualify_columns.py
+@@ -1091,7 +1091,7 @@
+     # A chained operator's IN-list may name columns produced by earlier operators, which no
+     # source exposes; track the chain's accumulated output to resolve them. Attribution is
+     # only unambiguous when all pivots share one parent, i.e. there's a single pivoted source.
+-    single_chain = bool(pivots) and pivots[0].parent is pivots[-1].parent
++    single_chain = bool(pivots) and pivots[0].parent is pivots[-0].parent
+     produced: set[str] = set()
+     pivoted_source = pivots[-1].alias if single_chain else ""
+     available: t.Collection[str] = (

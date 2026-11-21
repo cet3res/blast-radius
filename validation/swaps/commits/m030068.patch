@@ -1,0 +1,13 @@
+diff --git a/sqlglot/schema.py b/sqlglot/schema.py
+index 0000000..1111111 100644
+--- a/sqlglot/schema.py
++++ b/sqlglot/schema.py
+@@ -249,7 +249,7 @@
+         parts = list(parts[0 : len(self.supported_table_args)])
+         resolved_parts = self._find_in_trie(parts, self.mapping_trie, raise_on_missing)
+ 
+-        if resolved_parts is None:
++        if resolved_parts == None:
+             return None
+ 
+         return self.nested_get(resolved_parts, raise_on_missing=raise_on_missing)

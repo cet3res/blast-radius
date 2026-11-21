@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/singlestore.py b/sqlglot/generators/singlestore.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/singlestore.py
++++ b/sqlglot/generators/singlestore.py
+@@ -776,6 +776,7 @@
+         "host",
+         "hosts",
+         "hour",
++        "hour_microsecond",
+         "hour_microsecond",
+         "hour_minute",
+         "hour_second",

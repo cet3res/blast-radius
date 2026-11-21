@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -2649,7 +2649,7 @@
+                 expression = self._parse_expression()
+                 overload_mode = bool(
+                     expression
+-                    and self._curr.token_type == TokenType.COMMA
++                    and self._curr.token_type is TokenType.COMMA
+                     and self._next.token_type == TokenType.L_PAREN
+                 )
+                 if not overload_mode:

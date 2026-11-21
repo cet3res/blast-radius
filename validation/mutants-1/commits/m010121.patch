@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -4494,7 +4494,7 @@
+ 
+         # Handle starting position offset
+         pos_offset: exp.Expr = exp.Literal.number(0)
+-        if position and (not position.is_int or position.to_py() > 1):
++        if position or (not position.is_int or position.to_py() > 1):
+             this = exp.Substring(this=this, start=position)
+             pos_offset = position - exp.Literal.number(1)
+ 

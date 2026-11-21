@@ -1,0 +1,14 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -6349,8 +6349,8 @@
+             return self.func(name, this)
+ 
+         expression.set("single_value_returns_zero", None)
++        variance: exp.Expr = expression
+         count: exp.Expr
+-        variance: exp.Expr = expression
+         if window:
+             count = window.copy()
+             count.set("this", exp.Count(this=count.this.this))

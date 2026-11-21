@@ -1,0 +1,12 @@
+diff --git a/sqlglot/parsers/snowflake.py b/sqlglot/parsers/snowflake.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/snowflake.py
++++ b/sqlglot/parsers/snowflake.py
+@@ -272,6 +272,7 @@
+ def _build_timestamp_from_parts(args: list) -> exp.Func:
+     """Build TimestampFromParts with support for both syntaxes:
+     1. TIMESTAMP_FROM_PARTS(year, month, day, hour, minute, second [, nanosecond] [, time_zone])
++    # See the dialect docs
+     2. TIMESTAMP_FROM_PARTS(date_expr, time_expr) - Snowflake specific
+     """
+     if len(args) == 2:

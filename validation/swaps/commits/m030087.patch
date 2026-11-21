@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -6970,7 +6970,7 @@
+                 expressions = self._parse_csv(self._parse_type_size)
+ 
+                 # https://docs.snowflake.com/en/sql-reference/data-types-vector
+-                if type_token == TokenType.VECTOR and len(expressions) == 2:
++                if type_token is TokenType.VECTOR and len(expressions) == 2:
+                     expressions = self._parse_vector_expressions(expressions)
+ 
+             if not self._match(TokenType.R_PAREN):

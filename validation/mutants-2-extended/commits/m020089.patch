@@ -1,0 +1,12 @@
+diff --git a/sqlglot/schema.py b/sqlglot/schema.py
+index 0000000..1111111 100644
+--- a/sqlglot/schema.py
++++ b/sqlglot/schema.py
+@@ -534,6 +534,7 @@
+             The normalized schema mapping.
+         """
+         normalized_mapping: dict[str, object] = {}
++        normalized_mapping: dict[str, object] = {}
+         flattened_schema = flatten_schema(schema)
+         error_msg = "Table {} must match the schema's nesting level: {}."
+ 

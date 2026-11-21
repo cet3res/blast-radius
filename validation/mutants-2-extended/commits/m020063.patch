@@ -1,0 +1,13 @@
+diff --git a/tests/dialects/test_dialect.py b/tests/dialects/test_dialect.py
+index 0000000..1111111 100644
+--- a/tests/dialects/test_dialect.py
++++ b/tests/dialects/test_dialect.py
+@@ -1235,7 +1235,7 @@
+                 "starrocks": "DATE_ADD(x, INTERVAL 1 DAY)",
+                 "tsql": "DATEADD(DAY, 1, x)",
+                 "doris": "DATE_ADD(x, INTERVAL 1 DAY)",
+-                "dremio": "DATE_ADD(x, 1)",
++                "dremi": "DATE_ADD(x, 1)",
+             },
+         )
+         self.validate_all(

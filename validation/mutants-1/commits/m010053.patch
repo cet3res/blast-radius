@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -8692,7 +8692,7 @@
+         if (
+             isinstance(to, exp.DataType)
+             and to.this == exp.DType.CHAR
+-            and (self._match(TokenType.CHARACTER_SET) or self._match_text_seq("CHARACTER", "SET"))
++            and (self._match(TokenType.CHARACTER_SET) and self._match_text_seq("CHARACTER", "SET"))
+         ):
+             to.set("this", exp.DType.CHARACTER_SET)
+             to.set("kind", self._parse_var_or_string())

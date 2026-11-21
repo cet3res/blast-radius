@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/clickhouse.py b/sqlglot/parsers/clickhouse.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/clickhouse.py
++++ b/sqlglot/parsers/clickhouse.py
+@@ -632,7 +632,7 @@
+         elif not self._match(TokenType.R_BRACE):
+             self.raise_error("Expecting }")
+ 
+-        if isinstance(this, exp.Identifier) and not this.quoted:
++        if isinstance(this, exp.Identifier) or not this.quoted:
+             this = exp.var(this.name)
+ 
+         return self.expression(exp.Placeholder(this=this, kind=kind))

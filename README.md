@@ -131,6 +131,12 @@ that never ran the edited code through state that outlives a test, through
 dynamic attribute names, or through environment differences. The map was built
 on macOS ARM64 with Python 3.13 and the locked packages; the scorer is Linux AMD64.
 
+## Continuing the work
+
+See `docs/HANDOFF.md` for the current state, measurements, rejected ideas and next
+steps. `validation/` holds synthetic patches with real outcomes (never read by the
+selector); score any set with `python tools/evaluate.py validation/mutants-1`.
+
 ## Code brought in
 
 - Organizer starter kit: `Dockerfile`, `Makefile`, `selector.py`, `requirements.lock` (`score.py` and `sample/` are used locally and not committed)

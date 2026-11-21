@@ -1,0 +1,12 @@
+diff --git a/sqlglot/serde.py b/sqlglot/serde.py
+index 0000000..1111111 100644
+--- a/sqlglot/serde.py
++++ b/sqlglot/serde.py
+@@ -10,7 +10,6 @@
+ 
+ 
+ INDEX = "i"
+-ARG_KEY = "k"
+ IS_ARRAY = "a"
+ CLASS = "c"
+ TYPE = "t"

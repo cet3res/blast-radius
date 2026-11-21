@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -3469,7 +3469,7 @@
+                             f"'{nulls_sort_change.strip()}' translation not supported for aggregate function {ancestor.sql_name()} with {sort_order} sort order"
+                         )
+                         nulls_sort_change = ""
+-                elif self.NULL_ORDERING_SUPPORTED is None:
++                elif self.NULL_ORDERING_SUPPORTED == None:
+                     if expression.this.is_int:
+                         self.unsupported(
+                             f"'{nulls_sort_change.strip()}' translation not supported with positional ordering"

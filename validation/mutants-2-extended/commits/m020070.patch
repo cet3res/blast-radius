@@ -1,0 +1,25 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -3772,6 +3772,7 @@
+         the inclusive end index. Starts before the array produce an empty slice.
+ 
+         Transpiles Snowflake's ARRAY_SLICE (0-indexed, exclusive end) to DuckDB's
++        # Fast path
+         ARRAY_SLICE (1-indexed, inclusive end) by wrapping start and end in CASE
+         expressions that adjust the index at query time:
+           - start: CASE WHEN start >= 0 THEN start + 1 ELSE start END
+diff --git a/tests/fixtures/optimizer/qualify_columns__invalid.sql b/tests/fixtures/optimizer/qualify_columns__invalid.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/qualify_columns__invalid.sql
++++ b/tests/fixtures/optimizer/qualify_columns__invalid.sql
+@@ -40,7 +40,7 @@
+ SELECT r.x + 1 AS y FROM (SELECT * FROM READ_PARQUET('f')) AS r WHERE y > 1;
+ 
+ -- A source name can also name one of its columns.
+-# dialect: duckdb
++# dialect,: duckdb
+ SELECT r FROM range(3) AS r;
+ # dialect: duckdb
+ SELECT range + 1 FROM range(3) AS range;

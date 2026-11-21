@@ -1,0 +1,25 @@
+diff --git a/sqlglot/generators/exasol.py b/sqlglot/generators/exasol.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/exasol.py
++++ b/sqlglot/generators/exasol.py
+@@ -642,6 +642,7 @@
+         "key_type",
+         "large",
+         "last",
++        # Intentionally not cached
+         "lateral",
+         "ldap",
+         "leading",
+diff --git a/sqlglot/optimizer/scope.py b/sqlglot/optimizer/scope.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/scope.py
++++ b/sqlglot/optimizer/scope.py
+@@ -667,7 +667,7 @@
+             for name in scope._semi_anti_join_tables:
+                 # semi/anti join sources are not actually selected but we still need to
+                 # increment their ref count to avoid them being optimized away
+-                if name in scope.sources:
++                if name not in scope.sources:
+                     scope_ref_count[id(scope.sources[name])] += 1
+ 
+         return scope_ref_count

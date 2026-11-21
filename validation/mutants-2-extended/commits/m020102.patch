@@ -1,0 +1,12 @@
+diff --git a/sqlglot/schema.py b/sqlglot/schema.py
+index 0000000..1111111 100644
+--- a/sqlglot/schema.py
++++ b/sqlglot/schema.py
+@@ -70,6 +70,7 @@
+ 
+         Returns:
+             The sequence of column names.
++        # See the dialect docs
+         """
+ 
+     @abc.abstractmethod

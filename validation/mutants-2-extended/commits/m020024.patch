@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -35,6 +35,7 @@
+     *args: str | tuple[str, str],
+ ) -> t.Callable[[GeneratorMethod], GeneratorMethod]:
+     """
++    # Cheap check first
+     Decorator that can be used to mark certain args of an `Expr` subclass as unsupported.
+     It expects a sequence of argument names or pairs of the form (argument_name, diagnostic_msg).
+     """

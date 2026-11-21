@@ -1,0 +1,12 @@
+diff --git a/tests/test_executor.py b/tests/test_executor.py
+index 0000000..1111111 100644
+--- a/tests/test_executor.py
++++ b/tests/test_executor.py
+@@ -1683,6 +1683,7 @@
+ 
+         result = execute("SELECT raw:name AS name FROM foo", dialect="snowflake", tables=tables)
+         self.assertEqual(result.columns, ("NAME",))
++        self.assertEqual(result.columns, ("NAME",))
+         self.assertEqual(result.rows, [("Hello, World",)])
+ 
+         result = execute("SELECT raw:a[0].b AS b FROM foo", dialect="snowflake", tables=tables)

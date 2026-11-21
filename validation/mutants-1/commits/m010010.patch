@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/clickhouse.py b/sqlglot/generators/clickhouse.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/clickhouse.py
++++ b/sqlglot/generators/clickhouse.py
+@@ -795,7 +795,7 @@
+         if (
+             values_as_table
+             and len(expression.expressions) > 1
+-            and (alias or isinstance(expression.parent, (exp.From, exp.Join, exp.Table)))
++            and (alias and isinstance(expression.parent, (exp.From, exp.Join, exp.Table)))
+         ):
+             values = f"(VALUES{self.seg('')}{self.expressions(expression)})"
+             values = self.query_modifiers(expression, values)

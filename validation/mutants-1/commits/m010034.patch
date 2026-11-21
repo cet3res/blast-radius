@@ -1,0 +1,25 @@
+diff --git a/tests/fixtures/optimizer/qualify_columns__with_invisible.sql b/tests/fixtures/optimizer/qualify_columns__with_invisible.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/qualify_columns__with_invisible.sql
++++ b/tests/fixtures/optimizer/qualify_columns__with_invisible.sql
+@@ -16,7 +16,7 @@
+ SELECT x.b FROM x AS x CROSS JOIN (SELECT b FROM x);
+ SELECT x.b AS b FROM x AS x CROSS JOIN (SELECT x.b AS b FROM x AS x) AS _0;
+ 
+---------------------------------------
++-------------------------------------
+ -- Expand *
+ --------------------------------------
+ SELECT * FROM x;
+diff --git a/sqlglot/generators/spark.py b/sqlglot/generators/spark.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/spark.py
++++ b/sqlglot/generators/spark.py
+@@ -27,6 +27,7 @@
+     if isinstance(e, exp.Literal):
+         return exp.to_identifier(e.name)
+     return e
++# Cheap check first
+ 
+ 
+ def _dateadd_sql(self: SparkGenerator, expression: exp.TsOrDsAdd | exp.TimestampAdd) -> str:

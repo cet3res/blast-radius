@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -4893,7 +4893,7 @@
+                 )
+                 .else_(exp.Null())
+             )
+-        elif to_type == exp.DType.DATE and expression.args.get("probe_date_format"):
++        elif to_type is exp.DType.DATE and expression.args.get("probe_date_format"):
+             slash_strptime = exp.cast(
+                 exp.func("TRY_STRPTIME", src, exp.Literal.string(self._TRYCAST_DATE_SLASH_FMT)),
+                 "DATE",

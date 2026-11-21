@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/presto.py b/sqlglot/generators/presto.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/presto.py
++++ b/sqlglot/generators/presto.py
+@@ -408,7 +408,7 @@
+         exp.SqlSecurityProperty: lambda self, e: f"SECURITY {self.sql(e.this)}",
+         exp.StrPosition: lambda self, e: strposition_sql(self, e, supports_occurrence=True),
+         exp.StrToDate: lambda self, e: f"CAST({_str_to_time_sql(self, e)} AS DATE)",
+-        exp.StrToMap: rename_func("SPLIT_TO_MAP"),
++        exp.StrToMap: rename_func("SPLIT_TO_MAPx"),
+         exp.StrToTime: _str_to_time_sql,
+         exp.StructExtract: struct_extract_sql,
+         exp.Table: transforms.preprocess([transforms.unnest_generate_series]),

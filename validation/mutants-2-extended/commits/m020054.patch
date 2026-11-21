@@ -1,0 +1,12 @@
+diff --git a/sqlglot/expressions/query.py b/sqlglot/expressions/query.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/query.py
++++ b/sqlglot/expressions/query.py
+@@ -2282,7 +2282,6 @@
+     Args:
+         expressions: the SQL code strings, corresponding to the `UNION`'s operands.
+             If `Expr` instances are passed, they will be used as-is.
+-        distinct: set the DISTINCT flag if and only if this is true.
+         dialect: the dialect used to parse the input expression.
+         copy: whether to copy the expression.
+         opts: other options to use to parse the input expressions.

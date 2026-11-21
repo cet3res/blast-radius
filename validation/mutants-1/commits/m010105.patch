@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/oracle.py b/sqlglot/parsers/oracle.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/oracle.py
++++ b/sqlglot/parsers/oracle.py
+@@ -205,7 +205,7 @@
+                         and self._match_texts(("K", "M", "G", "T", "P", "E"))
+                     ):
+                         value = exp.var(f"{value.name}{self._prev.text.upper()}")
+-                if value is None:
++                if value == None:
+                     self.raise_error(f"Expected value for {name}")
+                 options.append(self.expression(exp.PhysicalProperty(this=name, value=value)))
+             return options

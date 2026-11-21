@@ -1,0 +1,12 @@
+diff --git a/tests/dialects/test_bigquery.py b/tests/dialects/test_bigquery.py
+index 0000000..1111111 100644
+--- a/tests/dialects/test_bigquery.py
++++ b/tests/dialects/test_bigquery.py
+@@ -3001,6 +3001,7 @@
+ 
+         with self.assertRaises(ParseError):
+             transpile("SELECT JSON_OBJECT('a', 1, 'b') AS json_data", read="bigquery")
++            transpile("SELECT JSON_OBJECT('a', 1, 'b') AS json_data", read="bigquery")
+ 
+     def test_mod(self):
+         for sql in ("MOD(a, b)", "MOD('a', b)", "MOD(5, 2)", "MOD((a + 1) * 8, 5 - 1)"):

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/scope.py b/sqlglot/optimizer/scope.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/scope.py
++++ b/sqlglot/optimizer/scope.py
+@@ -928,7 +928,7 @@
+     parent = expression.parent
+ 
+     # Subqueries can be arbitrarily nested
+-    while type(parent) is exp.Subquery:
++    while type(parent) == exp.Subquery:
+         parent = parent.parent
+ 
+     return type(parent) in (exp.From, exp.Join)

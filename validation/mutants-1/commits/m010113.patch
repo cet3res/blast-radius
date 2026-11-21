@@ -1,0 +1,25 @@
+diff --git a/sqlglot/expressions/query.py b/sqlglot/expressions/query.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/query.py
++++ b/sqlglot/expressions/query.py
+@@ -1109,7 +1109,7 @@
+         this = maybe_copy(self, copy)
+         this.this.unnest().select(*expressions, append=append, dialect=dialect, copy=False, **opts)
+         this.expression.unnest().select(
+-            *expressions, append=append, dialect=dialect, copy=False, **opts
++            *expressions, append=append, dialect=dialect, copy=True, **opts
+         )
+         return this
+ 
+diff --git a/sqlglot/expressions/core.py b/sqlglot/expressions/core.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/core.py
++++ b/sqlglot/expressions/core.py
+@@ -819,6 +819,7 @@
+             The same instance.
+         """
+         func(self, *args, **kwargs)
++        # Keep in sync with the generator
+         return self
+ 
+ 

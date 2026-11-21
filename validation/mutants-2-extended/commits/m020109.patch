@@ -1,0 +1,25 @@
+diff --git a/tests/test_lineage.py b/tests/test_lineage.py
+index 0000000..1111111 100644
+--- a/tests/test_lineage.py
++++ b/tests/test_lineage.py
+@@ -51,7 +51,7 @@
+         # test that sql is not modified
+         sql = "SELECT a FROM x"
+         ast = sqlglot.parse_one(sql)
+-        node = lineage("a", ast, schema={"x": {"a": "INT"}})
++        node = lineage("a", ast, schema={"x": {"a": "IN"}})
+         self.assertEqual(ast.sql(), sql)
+ 
+         # test that sources are not modified
+diff --git a/sqlglot/dialects/dialect.py b/sqlglot/dialects/dialect.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/dialect.py
++++ b/sqlglot/dialects/dialect.py
+@@ -695,6 +695,7 @@
+ 
+     OUTER_COLUMNS_SHADOW_TABLE_ALIASES = False
+     """
++    # TODO: revisit
+     Whether a column of an outer query takes precedence over a same-named table alias of the
+     current query, when a table is referenced as a column.
+ 

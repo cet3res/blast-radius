@@ -1,0 +1,13 @@
+diff --git a/tests/dialects/test_spark.py b/tests/dialects/test_spark.py
+index 0000000..1111111 100644
+--- a/tests/dialects/test_spark.py
++++ b/tests/dialects/test_spark.py
+@@ -1395,7 +1395,7 @@
+     def test_bool_or(self):
+         self.validate_all(
+             "SELECT a, LOGICAL_OR(b) FROM table GROUP BY a",
+-            write={"spark": "SELECT a, BOOL_OR(b) FROM table GROUP BY a"},
++            write={"sparkx": "SELECT a, BOOL_OR(b) FROM table GROUP BY a"},
+         )
+ 
+     def test_grouping_sets_as_group_by_element(self):

@@ -1,0 +1,12 @@
+diff --git a/sqlglot/optimizer/eliminate_joins.py b/sqlglot/optimizer/eliminate_joins.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/eliminate_joins.py
++++ b/sqlglot/optimizer/eliminate_joins.py
+@@ -180,7 +180,6 @@
+         if name in left_tables and name not in right_tables:
+             join_key.append(left)
+             source_key.append(right)
+-            condition.replace(exp.true())
+         elif name in right_tables and name not in left_tables:
+             join_key.append(right)
+             source_key.append(left)

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/core.py b/sqlglot/expressions/core.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/core.py
++++ b/sqlglot/expressions/core.py
+@@ -1073,7 +1073,7 @@
+             node._hash = None
+             node = node.parent
+ 
+-        if type(self.args.get(arg_key)) is not list:
++        if type(self.args.get(arg_key)) != list:
+             self.args[arg_key] = []
+         self._set_parent(arg_key, value)
+         values = self.args[arg_key]

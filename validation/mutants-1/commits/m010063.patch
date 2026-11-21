@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -8485,7 +8485,7 @@
+ 
+             condition = self._parse_disjunction()
+ 
+-            if not condition or not self._match(TokenType.THEN):
++            if not condition or self._match(TokenType.THEN):
+                 self._retreat(index)
+                 return None
+ 

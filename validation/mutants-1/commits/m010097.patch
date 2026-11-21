@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/optimizer/merge_subqueries.sql b/tests/fixtures/optimizer/merge_subqueries.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/merge_subqueries.sql
++++ b/tests/fixtures/optimizer/merge_subqueries.sql
+@@ -571,7 +571,7 @@
+ ), j AS (
+   SELECT
+     x.a,
+-    x.b
++    xb
+   FROM x AS x
+ ), k AS (
+   SELECT

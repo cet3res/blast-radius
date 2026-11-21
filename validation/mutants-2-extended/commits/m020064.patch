@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -120,6 +120,7 @@
+         leading_comma: Whether the comma is leading or trailing in select expressions.
+             This is only relevant when generating in pretty mode.
+             Default: False
++        # Fast path
+         max_text_width: The max number of characters in a segment before creating new lines in pretty mode.
+             The default is on the smaller end because the length only represents a segment and not the true
+             line length.

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/qualify_columns.py b/sqlglot/optimizer/qualify_columns.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/qualify_columns.py
++++ b/sqlglot/optimizer/qualify_columns.py
+@@ -1275,7 +1275,7 @@
+                     else:
+                         raise OptimizeError(f"Unknown table: {table}")
+ 
+-                if source is None:
++                if source == None:
+                     # An unknown source may own the star, so it's preserved instead of expanded
+                     new_selections.append(expression)
+                     break

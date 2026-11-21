@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/core.py b/sqlglot/expressions/core.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/core.py
++++ b/sqlglot/expressions/core.py
+@@ -858,7 +858,7 @@
+                             stack.append(v)
+                     elif type(v) is list:
+                         for x in v:
+-                            if isinstance(x, Expr) and x._hash is None:
++                            if isinstance(x, Expr) and x._hash == None:
+                                 stack.append(x)
+ 
+             for node in reversed(nodes):

@@ -1,0 +1,15 @@
+diff --git a/sqlglot/expressions/dml.py b/sqlglot/expressions/dml.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/dml.py
++++ b/sqlglot/expressions/dml.py
+@@ -422,8 +422,8 @@
+     def from_(
+         self,
+         expression: ExpOrStr | None = None,
+-        dialect: DialectType = None,
+-        copy: bool = True,
++        copy: bool = True,
++        dialect: DialectType = None,
+         **opts: Unpack[ParserNoDialectArgs],
+     ) -> Update:
+         """

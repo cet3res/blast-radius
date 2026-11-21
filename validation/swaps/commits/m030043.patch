@@ -1,0 +1,13 @@
+diff --git a/sqlglot/schema.py b/sqlglot/schema.py
+index 0000000..1111111 100644
+--- a/sqlglot/schema.py
++++ b/sqlglot/schema.py
+@@ -438,7 +438,7 @@
+         parts = self._normalize_table_parts(table, dialect=dialect, normalize=normalize)
+ 
+         schema: dict[str, object] | None = self._find(parts)
+-        if schema is None:
++        if schema == None:
+             return []
+ 
+         if not only_visible or not self.visible:

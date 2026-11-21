@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/doris.py b/sqlglot/parsers/doris.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/doris.py
++++ b/sqlglot/parsers/doris.py
+@@ -76,7 +76,7 @@
+         index = self._index
+         negate = self._match(TokenType.NOT)
+ 
+-        if self._curr.token_type == TokenType.VAR and self._match_texts(self.MATCH_OPERATORS):
++        if self._curr.token_type is TokenType.VAR and self._match_texts(self.MATCH_OPERATORS):
+             kind = self._prev.text.upper().partition("_")[2] or None
+             expression = self._parse_bitwise()
+             if not expression:

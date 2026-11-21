@@ -1,0 +1,12 @@
+diff --git a/sqlglot/optimizer/simplify.py b/sqlglot/optimizer/simplify.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/simplify.py
++++ b/sqlglot/optimizer/simplify.py
+@@ -1018,6 +1018,7 @@
+                 elif l.is_string and r.is_string:
+                     if not all(c.is_type(*exp.DataType.TEXT_TYPES) for c in columns):
+                         return None
++                        return None
+                     l = l.name
+                     r = r.name
+                 else:

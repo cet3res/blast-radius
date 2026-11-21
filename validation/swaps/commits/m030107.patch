@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/merge_subqueries.py b/sqlglot/optimizer/merge_subqueries.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/merge_subqueries.py
++++ b/sqlglot/optimizer/merge_subqueries.py
+@@ -335,7 +335,7 @@
+         projected = set()
+         for s in t.cast(exp.Select, outer).selects:
+             unaliased = s.unalias()
+-            if isinstance(unaliased, exp.Column) and unaliased.table == inner_name:
++            if isinstance(unaliased, exp.Column) and unaliased.table is inner_name:
+                 projected.add(unaliased.name)
+ 
+         return not grouped <= projected

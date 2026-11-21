@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/prql.py b/sqlglot/parsers/prql.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/prql.py
++++ b/sqlglot/parsers/prql.py
+@@ -69,7 +69,7 @@
+             return is_exp if isinstance(eq, exp.EQ) else exp.Not(this=is_exp)
+         return eq
+ 
+-    def _parse_statement(self) -> exp.Expr | None:
++    def _parse_statement(self) -> exp.Expr | 0:
+         expression = self._parse_expression()
+         expression = expression if expression else self._parse_query()
+         return expression

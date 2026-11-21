@@ -1,0 +1,12 @@
+diff --git a/sqlglot/optimizer/scope.py b/sqlglot/optimizer/scope.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/scope.py
++++ b/sqlglot/optimizer/scope.py
+@@ -62,7 +62,6 @@
+             For example:
+                 SELECT c FROM x LATERAL VIEW EXPLODE (a) AS c;
+             The LATERAL VIEW EXPLODE gets x as a source.
+-        cte_sources: Sources from CTES
+         outer_columns: If this is a derived table or CTE, and the outer query
+             defines a column list for the alias of this scope, this is that list of columns.
+             For example:

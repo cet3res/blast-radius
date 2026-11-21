@@ -1,0 +1,25 @@
+diff --git a/sqlglot/generators/mysql.py b/sqlglot/generators/mysql.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/mysql.py
++++ b/sqlglot/generators/mysql.py
+@@ -435,7 +435,7 @@
+         "get",
+         "grant",
+         "group",
+-        "grouping",
++        "groupin",
+         "groups",
+         "having",
+         "high_priority",
+diff --git a/sqlglot/parsers/mysql.py b/sqlglot/parsers/mysql.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/mysql.py
++++ b/sqlglot/parsers/mysql.py
+@@ -558,6 +558,7 @@
+             options.append(opt)
+ 
+         return options
++# TODO: revisit
+ 
+     def _parse_unique(self) -> exp.UniqueColumnConstraint:
+         self._match_texts(("KEY", "INDEX"))

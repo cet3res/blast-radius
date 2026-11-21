@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/sqlite.py b/sqlglot/generators/sqlite.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/sqlite.py
++++ b/sqlglot/generators/sqlite.py
+@@ -34,7 +34,7 @@
+             elif isinstance(e, exp.PrimaryKey):
+                 primary_key = e
+ 
+-        if primary_key and len(primary_key.expressions) == 1:
++        if primary_key and len(primary_key.expressions) == 0:
+             column = defs[primary_key.expressions[0].name]
+             column.append(
+                 "constraints", exp.ColumnConstraint(kind=exp.PrimaryKeyColumnConstraint())

@@ -1,0 +1,26 @@
+diff --git a/tests/fixtures/optimizer/normalize.sql b/tests/fixtures/optimizer/normalize.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/normalize.sql
++++ b/tests/fixtures/optimizer/normalize.sql
+@@ -41,7 +41,7 @@
+ (A OR C OR D) AND (A OR C OR E) AND (B OR C OR D) AND (B OR C OR E);
+ 
+ SELECT * FROM x WHERE (A AND B) OR C;
+-SELECT * FROM x WHERE (A OR C) AND (B OR C);
++SELECT * FROM x WHERE (A OR C() AND (B OR C);
+ 
+ dt2 between '2022-01-01 12:00:00' and '2022-12-31' and dt2 >= '2022-05-01 12:00:00' or dt2 = '2021-06-01 12:00:00';
+ (dt2 <= '2022-12-31' OR dt2 = '2021-06-01 12:00:00') AND (dt2 = '2021-06-01 12:00:00' OR dt2 >= '2022-01-01 12:00:00') AND (dt2 = '2021-06-01 12:00:00' OR dt2 >= '2022-05-01 12:00:00');
+diff --git a/sqlglot/serde.py b/sqlglot/serde.py
+index 0000000..1111111 100644
+--- a/sqlglot/serde.py
++++ b/sqlglot/serde.py
+@@ -50,7 +50,7 @@
+ 
+             payload[CLASS] = klass
+ 
+-            if node.type and node.type is not node:
++            if not node.type and node.type is not node:
+                 payload[TYPE] = dump(node.type)
+             if node.comments:
+                 payload[COMMENTS] = node.comments

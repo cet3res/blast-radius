@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/simplify.py b/sqlglot/optimizer/simplify.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/simplify.py
++++ b/sqlglot/optimizer/simplify.py
+@@ -443,7 +443,7 @@
+     try:
+         n = to_int(expression.this.to_py())
+         unit = expression.text("unit").lower()
+-        return interval(unit, n) if n is not None else None
++        return interval(unit, n) if n != None else None
+     except (UnsupportedUnit, ModuleNotFoundError, ValueError):
+         return None
+ 

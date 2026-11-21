@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/optimizer/tpc-ds/tpc-ds.sql b/tests/fixtures/optimizer/tpc-ds/tpc-ds.sql
+index 0000000..1111111 100644
+--- a/tests/fixtures/optimizer/tpc-ds/tpc-ds.sql
++++ b/tests/fixtures/optimizer/tpc-ds/tpc-ds.sql
+@@ -9026,7 +9026,7 @@
+     ) AS "mar_sales",
+     SUM(
+       CASE
+-        WHEN "date_dim"."d_moy" = 4
++         WHEN "date_dim"."d_moy" = 4
+         THEN "web_sales"."ws_ext_sales_price" * "web_sales"."ws_quantity"
+         ELSE 0
+       END

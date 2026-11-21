@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/clickhouse.py b/sqlglot/generators/clickhouse.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/clickhouse.py
++++ b/sqlglot/generators/clickhouse.py
+@@ -248,7 +248,7 @@
+         exp.DType.DATE32: "Date32",
+         exp.DType.DATETIME: "DateTime",
+         exp.DType.DATETIME2: "DateTime",
+-        exp.DType.SMALLDATETIME: "DateTime",
++        exp.DType.SMALLDATETIME: "DateTimex",
+         exp.DType.DATETIME64: "DateTime64",
+         exp.DType.DECIMAL: "Decimal",
+         exp.DType.DECIMAL32: "Decimal32",

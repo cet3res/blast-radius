@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/starrocks.py b/sqlglot/generators/starrocks.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/starrocks.py
++++ b/sqlglot/generators/starrocks.py
+@@ -184,7 +184,7 @@
+         "decimalv2",
+         "decimal32",
+         "decimal64",
+-        "decimal128",
++        "decimal12",
+         "default",
+         "deferred",
+         "delete",

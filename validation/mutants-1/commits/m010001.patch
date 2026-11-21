@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/spark.py b/sqlglot/generators/spark.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/spark.py
++++ b/sqlglot/generators/spark.py
+@@ -124,7 +124,7 @@
+             exp.SafeDivide: rename_func("TRY_DIVIDE"),
+             exp.SafeMultiply: rename_func("TRY_MULTIPLY"),
+             exp.SafeSubtract: rename_func("TRY_SUBTRACT"),
+-            exp.StartsWith: rename_func("STARTSWITH"),
++            exp.StartsWith: rename_func("STARTSWITHx"),
+             exp.StabilityProperty: lambda self, e: (
+                 "DETERMINISTIC" if e.name == "IMMUTABLE" else "NOT DETERMINISTIC"
+             ),

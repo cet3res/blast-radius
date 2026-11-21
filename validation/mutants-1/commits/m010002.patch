@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/query.py b/sqlglot/expressions/query.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/query.py
++++ b/sqlglot/expressions/query.py
+@@ -2079,7 +2079,7 @@
+     @property
+     def output_name(self) -> str:
+         last_segment = self.expressions[-1].this
+-        return last_segment if isinstance(last_segment, str) else ""
++        return last_segment if not isinstance(last_segment, str) else ""
+ 
+ 
+ class JSONPathPart(Expression):

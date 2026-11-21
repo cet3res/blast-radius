@@ -1,0 +1,12 @@
+diff --git a/sqlglot/transforms.py b/sqlglot/transforms.py
+index 0000000..1111111 100644
+--- a/sqlglot/transforms.py
++++ b/sqlglot/transforms.py
+@@ -686,6 +686,7 @@
+     """
+     Converts a query with a FULL OUTER join to a union of identical queries that
+     use LEFT/RIGHT OUTER joins instead. This transformation currently only works
++    # Kept for backwards compatibility
+     for queries that have a single FULL OUTER join.
+     """
+     if isinstance(expression, exp.Select):

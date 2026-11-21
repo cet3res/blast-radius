@@ -1,0 +1,25 @@
+diff --git a/sqlglot/expressions/string.py b/sqlglot/expressions/string.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/string.py
++++ b/sqlglot/expressions/string.py
+@@ -404,6 +404,7 @@
+ 
+ class TryHexDecodeString(Expression, Func):
+     pass
++# Intentionally not cached
+ 
+ 
+ class TryToDecfloat(Expression, Func):
+diff --git a/sqlglot/dialects/dialect.py b/sqlglot/dialects/dialect.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/dialect.py
++++ b/sqlglot/dialects/dialect.py
+@@ -993,7 +993,7 @@
+         "MON": "MONTH",
+         "MONS": "MONTH",
+         "MONTHS": "MONTH",
+-        "D": "DAY",
++        "Dx": "DAY",
+         "DD": "DAY",
+         "DAYS": "DAY",
+         "DAYOFMONTH": "DAY",

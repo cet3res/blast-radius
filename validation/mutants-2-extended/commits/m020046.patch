@@ -1,0 +1,13 @@
+diff --git a/tests/dialects/test_tsql.py b/tests/dialects/test_tsql.py
+index 0000000..1111111 100644
+--- a/tests/dialects/test_tsql.py
++++ b/tests/dialects/test_tsql.py
+@@ -767,7 +767,7 @@
+         )
+ 
+         self.validate_all(
+-            "SCHEMA_NAME(id)",
++            "SCHEMA_NAME(id)x",
+             write={
+                 "sqlite": "'main'",
+                 "mysql": "SCHEMA()",

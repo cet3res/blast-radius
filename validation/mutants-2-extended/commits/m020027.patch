@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/array.py b/sqlglot/expressions/array.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/array.py
++++ b/sqlglot/expressions/array.py
+@@ -34,7 +34,7 @@
+ 
+ 
+ class List(Expression, Func):
+-    arg_types = {"expressions": False}
++    arg_types = {"expression": False}
+     is_var_len_args = True
+ 
+ 

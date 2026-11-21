@@ -1,0 +1,13 @@
+diff --git a/sqlglot/planner.py b/sqlglot/planner.py
+index 0000000..1111111 100644
+--- a/sqlglot/planner.py
++++ b/sqlglot/planner.py
+@@ -278,7 +278,7 @@
+ 
+         limit: exp.Limit | None = expression.args.get("limit")
+ 
+-        if limit is not None and not limit.is_limit_all:
++        if limit is not None or not limit.is_limit_all:
+             step.limit = int(limit.text("expression"))
+ 
+         offset: exp.Offset | None = expression.args.get("offset")

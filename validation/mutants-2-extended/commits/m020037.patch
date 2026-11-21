@@ -1,0 +1,12 @@
+diff --git a/sqlglot/expressions/constraints.py b/sqlglot/expressions/constraints.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/constraints.py
++++ b/sqlglot/expressions/constraints.py
+@@ -175,7 +175,6 @@
+         "on_conflict": False,
+         "nulls": False,
+         "options": False,
+-        "include": False,
+     }
+ 
+ 

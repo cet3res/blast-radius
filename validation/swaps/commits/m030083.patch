@@ -1,0 +1,13 @@
+diff --git a/sqlglot/executor/env.py b/sqlglot/executor/env.py
+index 0000000..1111111 100644
+--- a/sqlglot/executor/env.py
++++ b/sqlglot/executor/env.py
+@@ -131,7 +131,7 @@
+ 
+ @null_if_any("this")
+ def substring(this, start=None, length=None):
+-    if start is None:
++    if start == None:
+         return this
+     elif start == 0:
+         return ""

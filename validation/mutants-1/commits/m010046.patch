@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/query.py b/sqlglot/expressions/query.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/query.py
++++ b/sqlglot/expressions/query.py
+@@ -581,7 +581,7 @@
+         "table": False,
+         "unique": False,
+         "primary": False,
+-        "amp": False,  # teradata
++        "ampx": False,  # teradata
+         "params": False,
+     }
+ 

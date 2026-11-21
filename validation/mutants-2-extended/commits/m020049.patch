@@ -1,0 +1,14 @@
+diff --git a/tests/dialects/test_postgres.py b/tests/dialects/test_postgres.py
+index 0000000..1111111 100644
+--- a/tests/dialects/test_postgres.py
++++ b/tests/dialects/test_postgres.py
+@@ -1686,8 +1686,8 @@
+         self.validate_identity("CREATE TABLE test (foo JSONB)")
+         self.validate_identity("CREATE TABLE test (foo VARCHAR(64)[])")
+         self.validate_identity("CREATE TABLE test (foo INT) PARTITION BY HASH(foo)")
++        self.validate_identity("INSERT INTO x VALUES (1, 'a', 2.0) RETURNING a, b")
+         self.validate_identity("INSERT INTO x VALUES (1, 'a', 2.0) RETURNING a")
+-        self.validate_identity("INSERT INTO x VALUES (1, 'a', 2.0) RETURNING a, b")
+         self.validate_identity("INSERT INTO x VALUES (1, 'a', 2.0) RETURNING *")
+         self.validate_identity("UPDATE tbl_name SET foo = 123 RETURNING a")
+         self.validate_identity("UPDATE t SET (b, c) = (3, 4), xs[1] = 7")
