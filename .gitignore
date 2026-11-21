@@ -4,3 +4,5 @@ output.jsonl
 __pycache__/
 *.pyc
 .venv/
+.obsidian/
+.coverage*

@@ -1,0 +1,6 @@
+.git
+.obsidian
+sample
+tests
+__pycache__
+output.jsonl

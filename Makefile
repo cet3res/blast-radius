@@ -1,4 +1,5 @@
 IMAGE ?= blast-radius-entry
+PYTHON ?= python3
 SAMPLE := $(CURDIR)/sample
 OUTPUT := $(CURDIR)/output.jsonl
 
@@ -27,3 +28,17 @@ sample: build
 check: build
 	docker run $(RUN_FLAGS) $(IMAGE) > $(OUTPUT)
 	python3 score.py $(SAMPLE) $(SAMPLE)/answers.json $(OUTPUT) > /dev/null && echo "format ok"
+
+.PHONY: sample-local test map
+sample-local:
+	$(PYTHON) selector.py --data $(SAMPLE) > $(OUTPUT)
+	$(PYTHON) score.py $(SAMPLE) $(SAMPLE)/answers.json $(OUTPUT)
+
+test:
+	$(PYTHON) -m unittest discover -s tests -v
+
+# Use Python 3.13 with requirements.lock and coverage==7.10.7 installed.
+# SOURCE must be an unmodified checkout at the competition's pinned commit.
+map:
+	$(PYTHON) tools/build_map.py "$(SOURCE)" sample/tests.json dependencies.json.gz
+	$(PYTHON) tools/build_profile.py "$(SOURCE)" dependencies.json.gz dependencies.json.gz --python $(PYTHON)
