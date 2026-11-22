@@ -911,6 +911,7 @@ class ImportState:
         self.failed = False
         self.checks_failed = False
         self.server = None
+        self.seconds = {}  # wall seconds spent waiting on the server, by request kind
 
     def close(self):
         if self.server is not None:
@@ -978,6 +979,7 @@ class ImportState:
                     return None
                 self.runs -= 1
                 return self.run(dict(request, cache=self.code, baseline=self.state))
+        started = time.monotonic()
         try:
             self.server.stdin.write((json.dumps(request) + '\n').encode())
             self.server.stdin.flush()
@@ -985,6 +987,8 @@ class ImportState:
             self.kill_server()
             return None
         line = self.readline(120)
+        kind = 'checks' if 'checks' in request else 'fingerprint'
+        self.seconds[kind] = self.seconds.get(kind, 0.0) + time.monotonic() - started
         if line is None:
             log('fingerprint timed out or died')
             self.kill_server()
@@ -1312,6 +1316,23 @@ class Selector:
             proxy['names'] = names
         return proxy['names']
 
+    def naming_lines(self, path, names) -> set[int]:
+        """Lines of a source file whose statement names one of `names`."""
+        key = (path, frozenset(names))
+        cache = self.__dict__.setdefault('_naming', {})
+        if key not in cache:
+            text = self.m.sources.get(path, '')
+            found = set()
+            if any(name in text for name in names):
+                pattern = re.compile(r'(?<![\w])(?:' + '|'.join(map(re.escape, sorted(names))) + r')(?![\w])')
+                starts = self.line_starts(path)
+                units = self.m.units(path)
+                for match in pattern.finditer(text):
+                    line = bisect.bisect_right(starts, match.start())
+                    found.update(units.get(line, (line,)))
+            cache[key] = found
+        return cache[key]
+
     def check_phases(self, index, proxy, data) -> dict | None:
         """Steps to recompute for a selected TPC test ({phase: query bitmask, -1 for all,
         'inputs' when a TPC fixture changed}), or None when the test must run.
@@ -1344,6 +1365,7 @@ class Selector:
                     return None  # the test runs it, but no recorded step does
         if self.last_changed:
             names = self.run_names(proxy)
+            changed = set()
             for owner, attrs in self.last_changed.items():
                 if owner in ('<init>', '<runtime>') or attrs is None:
                     return None
@@ -1353,7 +1375,13 @@ class Selector:
                         return None
                     if not module and kind != 'd':
                         return None  # methods are dispatched by computed names
-            phases = {ph: -1 for ph in proxy['phases']}
+                    changed.add(attr)
+            # Import-time data is read by code that names it (as when selecting tests for
+            # it): recompute the steps of the queries that ran such a line.
+            for ph in proxy['phases']:
+                for path, per_line in proxy['queries'][ph].items():
+                    for line in self.naming_lines(path, changed) & per_line.keys():
+                        phases[ph] = phases.get(ph, 0) | per_line[line]
         fixtures = (m.data.get('proxies') or {}).get('fixtures', {})
         for path, text in data.items():
             if path in fixtures:
@@ -1675,7 +1703,10 @@ def main():
     sys.stdout.write('\n'.join(lines) + ('\n' if lines else ''))
     sys.stdout.flush()
     runs = selector.state.runs if selector else 0
-    log(f'{len(patches)} commits, {runs} import fingerprints, {time.process_time() - started:.2f}s CPU in selector')
+    waits = ', '.join(f'{k} {v:.2f}s' for k, v in sorted(selector.state.seconds.items())) if selector else ''
+    checks = selector.state.checks_run if selector else 0
+    log(f'{len(patches)} commits, {runs} import fingerprints, {checks} checks ({waits}), '
+        f'{time.process_time() - started:.2f}s CPU in selector')
 
 
 if __name__ == '__main__':

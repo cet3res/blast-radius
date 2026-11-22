@@ -302,7 +302,7 @@ class CheckPhaseTests(unittest.TestCase):
         self.proxy = {'name': 'tpcds', 'phases': ('optimize',), 'names': None, 'run': {'sqlglot/a.py': {2}},
                       'queries': {'optimize': {'sqlglot/a.py': {3: 0b101}}}}
         self.selector = Selector.__new__(Selector)
-        self.selector.m, self.selector.last_changed = self.m, None
+        self.selector.m, self.selector.last_changed, self.selector._texts = self.m, None, None
         self.fixture = fixture
 
     def phases(self, info, data=None, changed=None):
@@ -318,7 +318,8 @@ class CheckPhaseTests(unittest.TestCase):
         self.assertEqual(self.phases({'tests/test_other.py': ({1}, False, set())}), {})
 
     def test_import_time_state(self):
-        self.assertEqual(self.phases({}, changed={'sqlglot.a:K': {'DATA': 'd'}}), {'optimize': -1})
+        self.assertEqual(self.phases({}, changed={'sqlglot.a:K': {'DATA': 'd'}}), {})  # no step names it
+        self.assertEqual(self.phases({}, changed={'sqlglot.a:K': {'x': 'd'}}), {'optimize': 0b101})
         self.assertIsNone(self.phases({}, changed={'sqlglot.a:K': {'method': 'c'}}))
         self.assertIsNone(self.phases({}, changed={'sqlglot.a:K': {'RUN_NAME': 'd'}}))  # read by the run phase
         self.assertIsNone(self.phases({}, changed={'<init>': {'modules': 'd'}}))
