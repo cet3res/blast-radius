@@ -93,10 +93,24 @@ simulated seconds on sample-like changes drop by about a quarter.
 
 **Container check.** `docker build` + `docker run` with the scorer's flags
 (`--network none --cpus 2 --memory 4096m --read-only --tmpfs /tmp:size=64m
---user 65534:65534 --pids-limit 256`) on the 135 mutants-1 patches: the build-time
-`--prepare` succeeds (baseline state, compiled modules and TPC step results),
-output is identical to the local run for all 135 commits, peak memory 222 MB, 39 s
-wall.
+--user 65534:65534 --pids-limit 256`): the build-time `--prepare` succeeds
+(baseline state, compiled modules and TPC step results) and the output is identical
+to the local run on every validation commit.
+
+| Set | Commits | Identical | CPU in container | Wall | Peak memory |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| mutants-1 | 135 | 135 | 30.7 s | 31 s | 221 MB |
+| mutants-2-extended | 120 | 120 | 58.3 s | 59 s | 274 MB |
+| swaps | 109 | 109 | 15.9 s | 16 s | 211 MB |
+
+CPU inside the container is about 30% above the same run outside it on that
+machine (the image's interpreter); the 1.7x board factor above is relative to the
+run outside the container.
+
+**Safety guards.** Each forked child has a CPU limit (25 s for a check, 60 s for a
+fingerprint): a patch that makes the optimizer loop forever (tested with
+`while True: pass` in `qualify_columns`) costs 25 s and keeps the test. After 150 s
+of wall time no more checks are made, after 210 s no more patched imports.
 
 ## Map
 
