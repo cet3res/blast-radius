@@ -1,0 +1,12 @@
+diff --git a/sqlglot/dialects/dialect.py b/sqlglot/dialects/dialect.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/dialect.py
++++ b/sqlglot/dialects/dialect.py
+@@ -1030,7 +1030,6 @@
+         "MIN": "MINUTE",
+         "MINUTES": "MINUTE",
+         "MINS": "MINUTE",
+-        "S": "SECOND",
+         "SEC": "SECOND",
+         "SECONDS": "SECOND",
+         "SECS": "SECOND",

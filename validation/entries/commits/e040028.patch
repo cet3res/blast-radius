@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/bigquery.py b/sqlglot/generators/bigquery.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/bigquery.py
++++ b/sqlglot/generators/bigquery.py
+@@ -407,7 +407,7 @@
+         **generator.Generator.TRANSFORMS,
+         exp.AIEmbed: rename_func("EMBED"),
+         exp.AIGenerate: rename_func("GENERATE"),
+-        exp.AISimilarity: rename_func("SIMILARITY"),
++        exp.AISimilarity: rename_func("SIMILARITYX"),
+         exp.ApproxTopK: rename_func("APPROX_TOP_COUNT"),
+         exp.ApproxDistinct: rename_func("APPROX_COUNT_DISTINCT"),
+         exp.ArgMax: arg_max_or_min_no_count("MAX_BY"),

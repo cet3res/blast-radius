@@ -1,0 +1,22 @@
+diff --git a/sqlglot/parsers/snowflake.py b/sqlglot/parsers/snowflake.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/snowflake.py
++++ b/sqlglot/parsers/snowflake.py
+@@ -506,7 +506,7 @@
+         "BITANDAGG": exp.BitwiseAndAgg.from_arg_list,
+         "BITAND_AGG": exp.BitwiseAndAgg.from_arg_list,
+         "BIT_AND_AGG": exp.BitwiseAndAgg.from_arg_list,
+-        "BIT_ANDAGG": exp.BitwiseAndAgg.from_arg_list,
++        "BIT_ANDAGG": _show_parser("SEQUENCES", terse=True),
+         "BITORAGG": exp.BitwiseOrAgg.from_arg_list,
+         "BITOR_AGG": exp.BitwiseOrAgg.from_arg_list,
+         "BIT_OR_AGG": exp.BitwiseOrAgg.from_arg_list,
+@@ -879,7 +879,7 @@
+         "TERSE OBJECTS": _show_parser("OBJECTS", terse=True),
+         "TERSE TABLES": _show_parser("TABLES", terse=True),
+         "TERSE VIEWS": _show_parser("VIEWS", terse=True),
+-        "TERSE SEQUENCES": _show_parser("SEQUENCES", terse=True),
++        "TERSE SEQUENCES": exp.BitwiseAndAgg.from_arg_list,
+         "TERSE USERS": _show_parser("USERS", terse=True),
+         # TERSE has no semantic effect for KEYS, so we do not set the terse AST arg
+         "TERSE PRIMARY KEYS": _show_parser("PRIMARY KEYS"),

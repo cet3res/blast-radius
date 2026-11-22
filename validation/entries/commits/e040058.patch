@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/aggregate.py b/sqlglot/expressions/aggregate.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/aggregate.py
++++ b/sqlglot/expressions/aggregate.py
+@@ -220,7 +220,7 @@
+ 
+ 
+ class ObjectAgg(Expression, AggFunc):
+-    arg_types = {"this": True, "expression": False}
++    arg_types = {"this": True, "expressionX": False}
+ 
+ 
+ class PercentileCont(Expression, AggFunc):

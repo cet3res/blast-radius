@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/array.py b/sqlglot/expressions/array.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/array.py
++++ b/sqlglot/expressions/array.py
+@@ -109,7 +109,7 @@
+ 
+ 
+ class ArrayAll(Expression, Func):
+-    arg_types = {"this": True, "expression": True}
++    arg_types = {"this": True, "expressionX": True}
+ 
+ 
+ class ArrayAny(Expression, Func):

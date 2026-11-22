@@ -12,6 +12,7 @@ is used by the submitted selector.
 from __future__ import annotations
 
 import argparse
+import ast
 import concurrent.futures
 import difflib
 import io
@@ -171,6 +172,113 @@ def docstring_mutation(rng, text: str):
     except SyntaxError:
         return None
     return candidate
+
+
+def literal_entries(text: str):
+    """Single-line entries of dict and set literals assigned at module or class level:
+    (lineno, kind, node) where kind is 'dict' (node: (key, value)) or 'set' (node: element)."""
+    found = []
+    tree = ast.parse(text)
+
+    def literals(value):
+        for node in ast.walk(value):
+            if isinstance(node, ast.Dict):
+                for k, v in zip(node.keys, node.values):
+                    if k is not None and k.lineno == v.end_lineno:
+                        found.append((k.lineno, 'dict', (k, v)))
+            elif isinstance(node, ast.Set):
+                for e in node.elts:
+                    if e.lineno == e.end_lineno:
+                        found.append((e.lineno, 'set', e))
+
+    def scan(body):
+        for stmt in body:
+            if isinstance(stmt, (ast.Assign, ast.AnnAssign)) and stmt.value is not None:
+                literals(stmt.value)
+            elif isinstance(stmt, ast.ClassDef):
+                scan(stmt.body)
+
+    scan(tree.body)
+    return found
+
+
+def entry_mutation(rng, text: str):
+    """Delete one entry line, alter one string in an entry, or swap two dict values."""
+    entries = literal_entries(text)
+    if not entries:
+        return None
+    lines = text.split('\n')
+    for _ in range(20):
+        lineno, kind, node = rng.choice(entries)
+        line = lines[lineno - 1]
+        how = rng.choice(['delete', 'string', 'swap'] if kind == 'dict' else ['delete', 'string'])
+        new_lines = list(lines)
+        if how == 'delete':
+            first = node[0] if kind == 'dict' else node
+            last = node[1] if kind == 'dict' else node
+            segment = line[first.col_offset:last.end_col_offset]
+            if line.strip().rstrip(',') != segment.strip():
+                continue  # not alone on its line
+            del new_lines[lineno - 1]
+        elif how == 'string':
+            strings = [n for part in (node if kind == 'dict' else (node,)) for n in ast.walk(part)
+                       if isinstance(n, ast.Constant) and isinstance(n.value, str) and n.lineno == lineno and n.value]
+            if not strings:
+                continue
+            target = rng.choice(strings)
+            quoted = line[target.col_offset:target.end_col_offset]
+            if not quoted or quoted[-1] not in '"\'' or quoted.startswith(('f', 'b', 'r')):
+                continue
+            new_lines[lineno - 1] = line[:target.end_col_offset - 1] + 'X' + line[target.end_col_offset - 1:]
+        else:
+            others = [e for e in entries if e[1] == 'dict' and e[0] != lineno and e[2][1].lineno == e[0]]
+            if not others:
+                continue
+            other_line, _, (ok, ov) = rng.choice(others)
+            k, v = node
+            if v.lineno != lineno:
+                continue
+            a = line[v.col_offset:v.end_col_offset]
+            b = lines[other_line - 1][ov.col_offset:ov.end_col_offset]
+            if a == b:
+                continue
+            new_lines[lineno - 1] = line[:v.col_offset] + b + line[v.end_col_offset:]
+            o = lines[other_line - 1]
+            new_lines[other_line - 1] = o[:ov.col_offset] + a + o[ov.end_col_offset:]
+        new_text = '\n'.join(new_lines)
+        try:
+            ast.parse(new_text)
+        except SyntaxError:
+            continue
+        if new_text != text:
+            return new_text
+    return None
+
+
+def generate_entries(args):
+    """Entry-level changes to dict and set literals (validation of key-level narrowing)."""
+    rng = random.Random(args.seed)
+    source = Path(args.source)
+    out = Path(args.out)
+    (out / 'commits').mkdir(parents=True, exist_ok=True)
+    candidates = []
+    for path in py_files(source):
+        count = len(literal_entries(path.read_text()))
+        if count:
+            candidates.append((path, count))
+    kinds = {}
+    made = 0
+    while made < args.count:
+        path = rng.choices([p for p, _ in candidates], weights=[c for _, c in candidates])[0]
+        text = path.read_text()
+        new_text = entry_mutation(rng, text)
+        if new_text is None:
+            continue
+        name = f'e{args.seed:02d}{made:04d}'
+        (out / 'commits' / f'{name}.patch').write_text(diff(path.relative_to(source).as_posix(), text, new_text))
+        kinds[name] = 'entry'
+        made += 1
+    (out / 'kinds.json').write_text(json.dumps(kinds, indent=1))
 
 
 def diff(rel: str, old: str, new: str) -> str:
@@ -354,6 +462,7 @@ def main():
     g.add_argument('--count', type=int, default=100)
     g.add_argument('--seed', type=int, default=1)
     g.add_argument('--extended', action='store_true')
+    g.add_argument('--entries', action='store_true', help='entry-level changes to dict and set literals')
     t = sub.add_parser('truth')
     t.add_argument('source')
     t.add_argument('out')
@@ -362,7 +471,10 @@ def main():
     t.add_argument('--python', default=sys.executable)
     t.add_argument('--timeout', type=int, default=300)
     args = parser.parse_args()
-    generate(args) if args.cmd == 'generate' else truth(args)
+    if args.cmd == 'generate':
+        generate_entries(args) if args.entries else generate(args)
+    else:
+        truth(args)
 
 
 if __name__ == '__main__':

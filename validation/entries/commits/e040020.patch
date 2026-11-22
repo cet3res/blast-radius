@@ -1,0 +1,12 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -800,7 +800,6 @@
+         TokenType.FULL,
+         TokenType.GET,
+         TokenType.IDENTIFIER,
+-        TokenType.IN,
+         TokenType.INOUT,
+         TokenType.IS,
+         TokenType.ISNULL,

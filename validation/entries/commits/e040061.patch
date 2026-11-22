@@ -1,0 +1,13 @@
+diff --git a/sqlglot/dialects/teradata.py b/sqlglot/dialects/teradata.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/teradata.py
++++ b/sqlglot/dialects/teradata.py
+@@ -58,7 +58,7 @@
+             "EQ": TokenType.EQ,
+             "EXEC": TokenType.EXECUTE,
+             "GE": TokenType.GTE,
+-            "GT": TokenType.GT,
++            "GTX": TokenType.GT,
+             "HELP": TokenType.COMMAND,
+             "INS": TokenType.INSERT,
+             "LE": TokenType.LTE,

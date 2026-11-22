@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/doris.py b/sqlglot/generators/doris.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/doris.py
++++ b/sqlglot/generators/doris.py
+@@ -393,7 +393,6 @@
+         "ngram_bf",
+         "no",
+         "no_use_mv",
+-        "non_nullable",
+         "not",
+         "null",
+         "nulls",

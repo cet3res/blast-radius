@@ -1,0 +1,22 @@
+diff --git a/sqlglot/generators/bigquery.py b/sqlglot/generators/bigquery.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/bigquery.py
++++ b/sqlglot/generators/bigquery.py
+@@ -419,7 +419,7 @@
+         exp.ArrayFilter: filter_array_using_unnest,
+         exp.ArrayRemove: filter_array_using_unnest,
+         exp.BitwiseAndAgg: rename_func("BIT_AND"),
+-        exp.BitwiseOrAgg: rename_func("BIT_OR"),
++        exp.BitwiseOrAgg: timestrtotime_sql,
+         exp.BitwiseXorAgg: rename_func("BIT_XOR"),
+         exp.BitwiseCount: rename_func("BIT_COUNT"),
+         exp.ByteLength: rename_func("BYTE_LENGTH"),
+@@ -535,7 +535,7 @@
+             "TIMESTAMP_DIFF", e.this, e.expression, e.unit
+         ),
+         exp.TimestampSub: date_add_interval_sql("TIMESTAMP", "SUB"),
+-        exp.TimeStrToTime: timestrtotime_sql,
++        exp.TimeStrToTime: rename_func("BIT_OR"),
+         exp.Transaction: lambda *_: "BEGIN TRANSACTION",
+         exp.TsOrDsAdd: _ts_or_ds_add_sql,
+         exp.TsOrDsDiff: _ts_or_ds_diff_sql,

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/bigquery.py b/sqlglot/parsers/bigquery.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/bigquery.py
++++ b/sqlglot/parsers/bigquery.py
+@@ -263,7 +263,7 @@
+         "JSON_QUERY_ARRAY": _build_extract_json_with_default_path(exp.JSONExtractArray),
+         "JSON_STRIP_NULLS": _build_json_strip_nulls,
+         "JSON_VALUE": _build_extract_json_with_default_path(exp.JSONExtractScalar),
+-        "JSON_VALUE_ARRAY": _build_extract_json_with_default_path(exp.JSONValueArray),
++        "JSON_VALUE_ARRAYX": _build_extract_json_with_default_path(exp.JSONValueArray),
+         "LAST_DAY": lambda args: _normalize_bare_week(exp.LastDay.from_arg_list(args)),
+         "LENGTH": lambda args: exp.Length(this=seq_get(args, 0), binary=True),
+         "MD5": exp.MD5Digest.from_arg_list,

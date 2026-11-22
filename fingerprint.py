@@ -24,6 +24,10 @@ import re
 import resource
 import sys
 import types
+# sqlglot validates expression arguments strictly when unittest or pytest is loaded
+# (sqlglot.expressions.core.UNITTEST), as it always is in the scored test runs: import
+# it before sqlglot so patched imports and checks behave as they do under the tests.
+import unittest  # noqa: F401
 
 ROOT = '/__blast__/'
 UNIT_ATTRS = ('tokenizer_class', 'jsonpath_tokenizer_class', 'parser_class', 'generator_class')
@@ -332,6 +336,10 @@ def compute(request, codes, base):
         (p[:-12] if p.endswith('/__init__.py') else p[:-3]).replace('/', '.')
         for p in available if p.startswith('sqlglot/') and p.endswith('.py')
     )
+    # First in the order pytest's collection imports them (an import can succeed or fail
+    # depending on what was imported before it), then the rest.
+    order = [n for n in request.get('order') or () if n in set(modules)]
+    modules = order + [n for n in modules if n not in set(order)]
     for name in modules:
         if name == 'sqlglot.__main__':
             continue
@@ -387,13 +395,49 @@ def compute(request, codes, base):
     state = {'failures': failures, 'owners': owners}
     if request.get('write_state'):
         write_atomic(request['write_state'], lambda f: json.dump(state, f))
+    by_key = {key: cls for cls in classes for key in (keys[id(cls)],)}
+
+    def container(name):
+        """The dict or set stored as `owner\0attr`, or None."""
+        owner, _, attr = name.partition('\0')
+        if owner.startswith('module:'):
+            holder = sys.modules.get(owner[len('module:'):])
+            value = vars(holder).get(attr) if holder is not None else None
+        else:
+            holder = by_key.get(owner)
+            value = holder.__dict__.get(attr) if holder is not None else None
+        return value if isinstance(value, (dict, set, frozenset)) else None
+
+    if request.get('write_keys'):
+        found = {}
+        for name in request.get('keyed', ()):
+            value = container(name)
+            if value is not None:
+                found[name] = key_hashes(fp, value)
+        write_atomic(request['write_keys'], lambda f: marshal.dump(found, f), binary=True)
     if base is not None:
+        changed = diff(base['owners'], owners)
+        # Per-key hashes of changed dicts and sets, so the selector can tell which entries changed.
+        keyed = {}
+        for owner, attrs in changed.items():
+            for attr in attrs or ():
+                value = container(owner + '\0' + attr)
+                if value is not None:
+                    keyed[owner + '\0' + attr] = key_hashes(fp, value)
         return {
             'ok': True,
             'new_failures': sorted(set(failures) - set(base['failures'])),
-            'changed': diff(base['owners'], owners),
+            'changed': changed,
+            'keys': keyed,
         }
     return {'ok': True}
+
+
+def key_hashes(fp, value) -> dict:
+    """Entry -> hash of its value (sets: membership only), keys described as the map describes them."""
+    if isinstance(value, dict):
+        return {fp(k): _hash(fp(v)) for k, v in value.items()}
+    return {fp(k): '1' for k in value}
 
 
 # ---------------------------------------------------------------- differential checks
@@ -687,6 +731,7 @@ def serve():
             continue
         request = json.loads(line)
         request['cache'] = config['cache']
+        request.setdefault('order', config.get('order'))
         read, write = os.pipe()
         pid = os.fork()
         if pid == 0:

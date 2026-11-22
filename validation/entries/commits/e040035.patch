@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/bigquery.py b/sqlglot/generators/bigquery.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/bigquery.py
++++ b/sqlglot/generators/bigquery.py
+@@ -414,7 +414,6 @@
+         exp.ArgMin: arg_max_or_min_no_count("MIN_BY"),
+         exp.Array: inline_array_unless_query,
+         exp.ArrayContains: _array_contains_sql,
+-        exp.ArrayDistinct: _array_agg_fold_sql,
+         exp.ArraySort: _array_agg_fold_sql,
+         exp.ArrayFilter: filter_array_using_unnest,
+         exp.ArrayRemove: filter_array_using_unnest,

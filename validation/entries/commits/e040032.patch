@@ -1,0 +1,22 @@
+diff --git a/sqlglot/dialects/postgres.py b/sqlglot/dialects/postgres.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/postgres.py
++++ b/sqlglot/dialects/postgres.py
+@@ -38,7 +38,7 @@
+     TIME_MAPPING = {
+         "d": "%u",  # 1-based day of week
+         "D": "%u",  # 1-based day of week
+-        "dd": "%d",  # day of month
++        "dd": "%G",  # day of month
+         "DD": "%d",  # day of month
+         "ddd": "%j",  # zero padded day of year
+         "DDD": "%j",  # zero padded day of year
+@@ -53,7 +53,7 @@
+         "HH24": "%H",  # 09
+         "iw": "%V",  # ISO 8601 week of year
+         "IW": "%V",  # ISO 8601 week of year
+-        "iyyy": "%G",  # ISO 8601 week-numbering year
++        "iyyy": "%d",  # ISO 8601 week-numbering year
+         "IYYY": "%G",  # ISO 8601 week-numbering year
+         "mi": "%M",  # zero padded minute
+         "MI": "%M",  # zero padded minute

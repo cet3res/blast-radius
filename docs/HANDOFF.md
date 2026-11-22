@@ -27,6 +27,7 @@ entries are read by the organizers.
 | CPU cut (same selections) | `0919b56` | 115.6 s, 0 misses | not submitted when this was written; expected ~180 |
 | CPU cut, submitted | `b39c886` | 115.6 s, 0 misses | 181.0 s = 174.774 simulated + 6.2 CPU |
 | TPC differential checks | `7c8bcbf` | not measured (no sample here) | **163.1 s** = 154.754 simulated + 8.3 CPU, 0 misses |
+| Key-level dict/set narrowing, test-mode children | this branch | not measured | not submitted yet (mutants-1 -11.5% vs v3) |
 
 **v3 (TPC differential checks).** On the validation sets with real outcomes and a
 locally timed catalog: mutants-1 730.7 -> 540.8 s, mutants-2 849.6 -> 702.7 s,
@@ -149,6 +150,15 @@ class/module data 294 s, fixtures 51 s.
 3. Targeted TPC-DS verification (see table) only if everything else is done.
 
 ## Pitfalls hit during development
+
+- sqlglot validates expression arguments strictly only when `unittest` or `pytest`
+  is in `sys.modules` (`sqlglot.expressions.core.UNITTEST`, read at import). Every
+  child that imports or runs sqlglot to predict test behaviour must import
+  `unittest` first (fingerprint.py does).
+- Key-level narrowing (`tools/build_keys.py`, `keys.json.gz`) must be rebuilt with the
+  map; the image writes `baseline-keys.marshal` at build. Containers held anywhere
+  but their owners' namespaces, mutated by tests, or (sets) handed to C set routines
+  are not narrowed.
 
 - Without `sample/`, rebuild a catalog: time the pinned suite with pytest
   `--junitxml`, map ids to numbers in the map's `tests` order (0-based).

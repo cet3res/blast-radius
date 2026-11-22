@@ -1,0 +1,12 @@
+diff --git a/sqlglot/typing/__init__.py b/sqlglot/typing/__init__.py
+index 0000000..1111111 100644
+--- a/sqlglot/typing/__init__.py
++++ b/sqlglot/typing/__init__.py
+@@ -335,7 +335,6 @@
+             exp.NthValue,
+             exp.Order,
+             exp.ArraySort,
+-            exp.Window,
+         }
+     },
+     **{

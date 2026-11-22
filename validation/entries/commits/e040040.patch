@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/mysql.py b/sqlglot/generators/mysql.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/mysql.py
++++ b/sqlglot/generators/mysql.py
+@@ -164,7 +164,6 @@
+         exp.BitwiseCount: rename_func("BIT_COUNT"),
+         exp.Chr: lambda self, e: self.chr_sql(e, "CHAR"),
+         exp.CurrentDate: no_paren_current_date_sql,
+-        exp.CurrentVersion: rename_func("VERSION"),
+         exp.DateDiff: remove_ts_or_ds_to_date(
+             lambda self, e: self.func("DATEDIFF", e.this, e.expression), ("this", "expression")
+         ),

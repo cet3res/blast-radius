@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/singlestore.py b/sqlglot/generators/singlestore.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/singlestore.py
++++ b/sqlglot/generators/singlestore.py
+@@ -558,7 +558,6 @@
+         "credentials",
+         "cross",
+         "cube",
+-        "csv",
+         "cume_dist",
+         "curdate",
+         "current",

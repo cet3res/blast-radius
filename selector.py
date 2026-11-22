@@ -26,6 +26,7 @@ import bisect
 import difflib
 import gzip
 import json
+import marshal
 import os
 from pathlib import Path
 import re
@@ -719,6 +720,7 @@ def coding_lines(text: str) -> list[str]:
 
 class DependencyMap:
     def __init__(self, path: Path, catalog: list[dict]):
+        self.path = Path(path)
         with gzip.open(path, 'rt') as f:
             data = json.load(f)
         if data.get('version') != 2 or data.get('revision') != PIN:
@@ -768,6 +770,20 @@ class DependencyMap:
         for index, commands in data['subprocess'].items():
             (self.import_only_spawners if all(import_only_command(c) for c in commands)
              else self.other_spawners).add(int(index))
+
+    def key_map(self):
+        """tools/build_keys.py output next to the map, loaded on first use (None if absent)."""
+        if not hasattr(self, '_key_map'):
+            self._key_map = None
+            path = self.path.parent / 'keys.json.gz'
+            try:
+                with gzip.open(path, 'rt') as f:
+                    data = json.load(f)
+                if data.get('version') == 1 and data.get('revision') == PIN:
+                    self._key_map = data
+            except (OSError, ValueError):
+                pass
+        return self._key_map
 
     def tree(self, path):
         if path not in self._trees:
@@ -897,21 +913,26 @@ class ImportState:
     built (`--prepare`, not charged), or else once per run into the temp directory.
     """
 
-    def __init__(self, sources: dict[str, str], prepared: Path = HERE, check_inputs: dict | None = None):
+    def __init__(self, sources: dict[str, str], prepared: Path = HERE, check_inputs: dict | None = None,
+                 order=()):
         self.sources = {k: v for k, v in sources.items() if k.startswith('sqlglot/')}
+        self.order = list(order)  # sqlglot modules in the order test collection imports them
         # tests/helpers.py and the TPC fixtures, for the differential checks (fingerprint.run_checks)
         self.check_inputs = check_inputs
         self.runs = 0
         self.checks_run = 0
         self.stamp = state_stamp(self.sources, check_inputs)
+        self.stamp['order'] = state_stamp({'order': '\n'.join(self.order)})['sources']
         self.temporary = []
-        self.code = self.state = self.checks = None
+        self.code = self.state = self.checks = self.keys_file = None
         meta = prepared / 'prepared.json'
         try:
             if json.loads(meta.read_text()) == self.stamp:
                 code, state = prepared / 'baseline-code.marshal', prepared / 'baseline-state.json'
                 if code.is_file() and state.is_file():
                     self.code, self.state = str(code), str(state)
+                    if (prepared / 'baseline-keys.marshal').is_file():
+                        self.keys_file = str(prepared / 'baseline-keys.marshal')
                     checks = prepared / 'baseline-checks.json'
                     if check_inputs is not None and checks.is_file():
                         self.checks = str(checks)
@@ -977,7 +998,7 @@ class ImportState:
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                     env=self.env(), cwd=str(HERE), start_new_session=True, bufsize=0,
                 )
-                config = {'cache': self.code, 'baseline': self.state, 'checks': self.checks}
+                config = {'cache': self.code, 'baseline': self.state, 'checks': self.checks, 'order': self.order}
                 self.server.stdin.write((json.dumps(config) + '\n').encode())
                 self.server.stdin.flush()
                 if self.readline(60) is None:
@@ -988,7 +1009,7 @@ class ImportState:
                 if 'checks' in request:
                     return None
                 self.runs -= 1
-                return self.run(dict(request, cache=self.code, baseline=self.state))
+                return self.run(dict(request, cache=self.code, baseline=self.state, order=self.order))
         started = time.monotonic()
         try:
             self.server.stdin.write((json.dumps(request) + '\n').encode())
@@ -1033,8 +1054,14 @@ class ImportState:
             return None
         return result
 
-    def prepare(self, code: str, state: str) -> bool:
-        result = self.run({'sources': self.sources, 'cache': code, 'write_cache': True, 'write_state': state})
+    def prepare(self, code: str, state: str, keyed=(), keys_file: str | None = None) -> bool:
+        request = {'sources': self.sources, 'cache': code, 'write_cache': True, 'write_state': state,
+                   'order': self.order}
+        if keyed and keys_file:
+            request.update(keyed=list(keyed), write_keys=keys_file)
+        result = self.run(request)
+        if keys_file and os.path.isfile(keys_file):
+            self.keys_file = keys_file
         return bool(result) and os.path.isfile(code) and os.path.isfile(state)
 
     def prepare_checks(self, checks: str) -> bool:
@@ -1097,7 +1124,19 @@ class ImportState:
             raise Everything('patched sqlglot fails to import')
         if result['new_failures']:
             raise Everything(f'patched modules fail to import: {result["new_failures"][:3]}')
-        return result['changed'], None
+        return result['changed'], result.get('keys') or {}
+
+    def baseline_keys(self) -> dict | None:
+        """Per-key hashes of every tracked container at the pinned revision (built with the image)."""
+        if not hasattr(self, '_baseline_keys'):
+            self._baseline_keys = None
+            if self.keys_file is not None:
+                try:
+                    with open(self.keys_file, 'rb') as f:
+                        self._baseline_keys = marshal.load(f)
+                except (OSError, ValueError, EOFError):
+                    pass
+        return self._baseline_keys
 
 
 def state_stamp(sources, check_inputs=None) -> dict:
@@ -1118,6 +1157,13 @@ def state_stamp(sources, check_inputs=None) -> dict:
     }
 
 
+def key_digest(entries: dict) -> str:
+    """Digest of a container's key descriptions, as tools/build_keys.py computes it."""
+    import hashlib
+    text = '\n'.join(sorted(entries))
+    return hashlib.blake2b(text.encode('utf-8', 'surrogatepass'), digest_size=10).hexdigest()
+
+
 def check_inputs_of(data: dict) -> dict | None:
     proxies = data.get('proxies')
     helpers = data.get('sources', {}).get('tests/helpers.py')
@@ -1130,13 +1176,21 @@ def prepare(map_path: Path) -> int:
     """Build-time: write the baseline import state, compiled modules and TPC step results."""
     with gzip.open(map_path, 'rt') as f:
         data = json.load(f)
-    state = ImportState(data['sources'], prepared=Path('/nonexistent'), check_inputs=check_inputs_of(data))
+    state = ImportState(data['sources'], prepared=Path('/nonexistent'), check_inputs=check_inputs_of(data),
+                        order=data.get('collection_order', ()))
     code, saved, checks = HERE / 'baseline-code.marshal', HERE / 'baseline-state.json', HERE / 'baseline-checks.json'
-    if not state.prepare(str(code), str(saved)):
+    keys_file = HERE / 'baseline-keys.marshal'
+    keyed = ()
+    try:
+        with gzip.open(map_path.parent / 'keys.json.gz', 'rt') as f:
+            keyed = sorted(json.load(f)['containers'])
+    except (OSError, ValueError, KeyError):
+        pass
+    if not state.prepare(str(code), str(saved), keyed, str(keys_file)):
         log('prepare failed; the baseline will be computed at run time')
         return 0
     state.code = str(code)
-    written = [code, saved]
+    written = [code, saved] + ([keys_file] if keys_file.is_file() else [])
     if state.prepare_checks(str(checks)):
         written.append(checks)
     else:
@@ -1153,7 +1207,8 @@ def prepare(map_path: Path) -> int:
 class Selector:
     def __init__(self, dependency_map: DependencyMap):
         self.m = dependency_map
-        self.state = ImportState(dependency_map.sources, check_inputs=check_inputs_of(dependency_map.data))
+        self.state = ImportState(dependency_map.sources, check_inputs=check_inputs_of(dependency_map.data),
+                                 order=dependency_map.data.get('collection_order', ()))
         self.py_info = {}
         self.last_changed = None
         self._texts = None
@@ -1516,8 +1571,9 @@ class Selector:
         return tests, differ.import_time
 
     def import_state_change(self, sources, new_modules, explain):
-        changed, _ = self.state.changes(sources)
+        changed, keyed = self.state.changes(sources)
         self.last_changed = changed
+        tests_from_keys = self.key_tests = set()
         m = self.m
         new_names = {p[:-12].replace('/', '.') if p.endswith('/__init__.py') else p[:-3].replace('/', '.') for p in new_modules}
         tests = set()
@@ -1527,6 +1583,9 @@ class Selector:
                 f'{o}{sorted(a)[:4] if a else ""}' for o, a in sorted(changed.items())[:12]))
         if '<runtime>' in changed:
             raise Everything('process-wide state changed at import')
+        changed = self.narrow_containers(changed, keyed, explain)
+        if changed is None:
+            return tests_from_keys, False
         global_names = set()      # module globals: any line naming them
         qualified = {}            # attribute -> class names it may be read through
         broad_names = set()       # classes used without instances: any line naming them
@@ -1575,7 +1634,55 @@ class Selector:
         if patterns:
             literals = global_names | set(qualified) | broad_names | broad_attrs
             tests |= self.references(re.compile('|'.join(f'(?:{p})' for p in patterns)), literals)
-        return tests, init_changed
+        return tests | tests_from_keys, init_changed
+
+    def narrow_containers(self, changed, keyed, explain):
+        """Take changed dicts and sets out of `changed` when the key map says which tests
+        read the changed entries (tools/build_keys.py); those tests go to self.key_tests.
+
+        An attribute qualifies when the map tracked it, its baseline and patched per-key
+        hashes are known, and it is still a dict or set. Its tests are those that looked
+        up a changed key (added, removed or with a new value), read it whole, or behaved
+        differently under tracking. Everything else keeps the usual handling.
+        """
+        keys_map = self.m.key_map()
+        baseline = self.state.baseline_keys() if keys_map and keyed else None
+        if not keys_map or not baseline:
+            return changed
+        containers = keys_map['containers']
+        sets = keys_map['sets']
+        remaining = {}
+        narrowed = []
+        for owner, attrs in changed.items():
+            if attrs is None or owner.startswith('<'):
+                remaining[owner] = attrs
+                continue
+            left = {}
+            for attr, kind in attrs.items():
+                name = owner + '\0' + attr
+                entry = containers.get(name)
+                if entry is None or name not in keyed or name not in baseline:
+                    left[attr] = kind
+                    continue
+                old, new = baseline[name], keyed[name]
+                if entry.get('digest') != key_digest(old):
+                    left[attr] = kind  # keys described differently than when mapped
+                    continue
+                touched = {k for k in old.keys() | new.keys() if old.get(k) != new.get(k)}
+                found = set(keys_map['broken'])
+                if entry['full'] is not None:
+                    found.update(sets[entry['full']])
+                for k in touched:
+                    sid = entry['keys'].get(k)
+                    if sid is not None:
+                        found.update(sets[sid])
+                self.key_tests |= found
+                narrowed.append(f'{owner}.{attr}: {len(touched)} keys -> {len(found)} tests')
+            if left:
+                remaining[owner] = left
+        if explain is not None and narrowed:
+            explain.append('keys: ' + '; '.join(narrowed[:8]))
+        return remaining
 
     def definition_tests(self, path, name) -> set[int]:
         """Tests that entered a module-level function or class named `name`."""

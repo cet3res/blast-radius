@@ -1,0 +1,22 @@
+diff --git a/sqlglot/expressions/ddl.py b/sqlglot/expressions/ddl.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/ddl.py
++++ b/sqlglot/expressions/ddl.py
+@@ -175,7 +175,7 @@
+ 
+ 
+ class DeclareItem(Expression):
+-    arg_types = {"this": True, "kind": False, "default": False}
++    arg_types = {"this": False, "kind": False, "default": False}
+ 
+ 
+ class Set(Expression):
+@@ -444,7 +444,7 @@
+ 
+ 
+ class Execute(Expression):
+-    arg_types = {"this": True, "expressions": False, "return_status": False}
++    arg_types = {"this": True, "expressions": False, "return_status": True}
+ 
+     @property
+     def name(self) -> str:

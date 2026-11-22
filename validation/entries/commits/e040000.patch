@@ -1,0 +1,12 @@
+diff --git a/sqlglot/expressions/query.py b/sqlglot/expressions/query.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/query.py
++++ b/sqlglot/expressions/query.py
+@@ -1838,7 +1838,6 @@
+         "alias": False,
+         "expressions": False,
+         "fields": False,
+-        "unpivot": False,
+         "using": False,
+         "group": False,
+         "columns": False,

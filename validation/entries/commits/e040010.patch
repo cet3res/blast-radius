@@ -1,0 +1,22 @@
+diff --git a/sqlglot/generators/hive.py b/sqlglot/generators/hive.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/hive.py
++++ b/sqlglot/generators/hive.py
+@@ -102,7 +102,7 @@
+ }
+ 
+ TIME_DIFF_FACTOR = {
+-    "MILLISECOND": " * 1000",
++    "MILLISECOND": sequence_sql,
+     "SECOND": "",
+     "MINUTE": " / 60",
+     "HOUR": " / 3600",
+@@ -302,7 +302,7 @@
+         ),
+         exp.StorageHandlerProperty: lambda self, e: f"STORED BY {self.sql(e, 'this')}",
+         exp.FromBase64: rename_func("UNBASE64"),
+-        exp.GenerateSeries: sequence_sql,
++        exp.GenerateSeries: " * 1000",
+         exp.GenerateDateArray: sequence_sql,
+         exp.If: if_sql(),
+         exp.ILike: no_ilike_sql,

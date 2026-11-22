@@ -1,0 +1,22 @@
+diff --git a/sqlglot/dialects/hive.py b/sqlglot/dialects/hive.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/hive.py
++++ b/sqlglot/dialects/hive.py
+@@ -53,7 +53,7 @@
+         "y": "%Y",
+         "Y": "%Y",
+         "YYYY": "%Y",
+-        "yyyy": "%Y",
++        "yyyy": "DECIMAL",
+         "YY": "%y",
+         "yy": "%y",
+         "MMMM": "%B",
+@@ -138,7 +138,7 @@
+             "Y": "TINYINT",
+             "D": "DOUBLE",
+             "F": "FLOAT",
+-            "BD": "DECIMAL",
++            "BD": "%Y",
+         }
+ 
+     Parser = HiveParser

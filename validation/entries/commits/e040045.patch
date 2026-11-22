@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/mysql.py b/sqlglot/generators/mysql.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/mysql.py
++++ b/sqlglot/generators/mysql.py
+@@ -217,7 +217,7 @@
+             "TIMESTAMPDIFF", unit_to_var(e), e.expression, e.this
+         ),
+         exp.TimestampSub: date_add_interval_sql("DATE", "SUB"),
+-        exp.TimeStrToUnix: rename_func("UNIX_TIMESTAMP"),
++        exp.TimeStrToUnix: rename_func("UNIX_TIMESTAMPX"),
+         exp.TimeStrToTime: lambda self, e: timestrtotime_sql(
+             self,
+             e,

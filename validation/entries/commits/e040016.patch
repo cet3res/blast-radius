@@ -1,0 +1,12 @@
+diff --git a/sqlglot/typing/spark2.py b/sqlglot/typing/spark2.py
+index 0000000..1111111 100644
+--- a/sqlglot/typing/spark2.py
++++ b/sqlglot/typing/spark2.py
+@@ -48,7 +48,6 @@
+     **{
+         expr_type: {"returns": exp.DType.DOUBLE}
+         for expr_type in {
+-            exp.Atan2,
+             exp.Randn,
+         }
+     },

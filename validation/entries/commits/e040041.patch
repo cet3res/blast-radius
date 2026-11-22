@@ -1,0 +1,22 @@
+diff --git a/sqlglot/expressions/query.py b/sqlglot/expressions/query.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/query.py
++++ b/sqlglot/expressions/query.py
+@@ -698,7 +698,7 @@
+         "side": False,
+         "kind": False,
+         "using": False,
+-        "method": False,
++        "method": True,
+         "global_": False,
+         "hint": False,
+         "match_condition": False,
+@@ -852,7 +852,7 @@
+ 
+ class TableFromRows(Expression, UDTF):
+     arg_types = {
+-        "this": True,
++        "this": False,
+         "alias": False,
+         "joins": False,
+         "pivots": False,

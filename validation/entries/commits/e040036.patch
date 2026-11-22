@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/postgres.py b/sqlglot/parsers/postgres.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/postgres.py
++++ b/sqlglot/parsers/postgres.py
+@@ -147,7 +147,7 @@
+         "VERSION": exp.CurrentVersion.from_arg_list,
+         "DATE_TRUNC": build_timestamp_trunc,
+         "DIV": lambda args: exp.cast(binary_from_function(exp.IntDiv)(args), exp.DType.DECIMAL),
+-        "GENERATE_SERIES": _build_generate_series,
++        "GENERATE_SERIESX": _build_generate_series,
+         "GET_BIT": lambda args: exp.Getbit(
+             this=seq_get(args, 0), expression=seq_get(args, 1), zero_is_msb=True
+         ),

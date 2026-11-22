@@ -30,6 +30,7 @@ Simulated CI seconds, lower is better: busiest worker seconds + 2 s per worker +
 - v2: syntax-tree diff, statement-level coverage, import-state fingerprints, operand-type profile: **115.6 s, 0 misses** on the sample; 0 misses on 364 synthetic changes with real test outcomes (see `docs/results.md`). Practice board: 186.3 s (174.8 simulated + 11.5 CPU)
 - v2 + CPU cut (`b39c886`): practice board 181.0 s (174.8 simulated + 6.2 CPU)
 - v3: differential checks for the TPC-DS execution test (21 s) and `test_optimized_tpch`: on the validation sets with real outcomes, simulated seconds drop 26% (mutants-1 730.7 -> 540.8 s), 0 misses (see `docs/results.md`). Practice board (`7c8bcbf`): **163.1 s** (154.8 simulated + 8.3 CPU, 0 misses)
+- v4: key-level narrowing of changed dict/set entries; fingerprint children run with sqlglot's test-mode validation: mutants-1 540.8 -> 478.4 s, new entry-mutation set 681.8 -> 359.4 s, 0 misses on all 428 validation commits
 
 ## How it works
 
@@ -71,6 +72,26 @@ are the change:
 - a module that no longer imports, or a change to process-wide state, selects
   everything; a change to what `import sqlglot` loads also selects the test that
   imports sqlglot in a subprocess.
+
+### Changed dict and set entries
+
+Much of sqlglot's behaviour lives in class-level tables (`TRANSFORMS`, `FUNCTIONS`,
+`KEYWORDS`, `RESERVED_KEYWORDS`, `TYPE_MAPPING`, expression `arg_types`...). A
+changed entry used to select every user of the table. `tools/build_keys.py` runs
+the catalog once with every dict, set and frozenset stored as a class attribute or
+module global replaced by a tracking copy, and records per test which keys it looked
+up (hits and misses, so added keys are covered) and whether it used the table as a
+whole (iteration, length, copies, comparisons, set algebra, pickling). Lookups in
+generator dispatch tables count as lookups of the `TRANSFORMS` they were built from.
+A table is tracked only when nothing but its owners' namespaces refers to it (gc
+check), tests never mutate it, and, for sets, no sqlglot or test code hands it to C
+routines that read a set's table directly (`set(x)`, `a.union(x)`...; static scan
+through local aliases and one call level). Every test passes under tracking.
+
+At run time the fingerprint child reports per-key hashes of changed tables; the
+selector compares them with the per-key hashes written at image build and selects
+the tests that looked up a changed key or read the table whole. Tables whose key
+descriptions differ from the map's (digest check) keep the usual handling.
 
 ### Expensive TPC tests: differential checks
 

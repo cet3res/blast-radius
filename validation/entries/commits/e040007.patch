@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -1846,7 +1846,7 @@
+         TokenType.NOT,
+     }
+ 
+-    IS_JSON_PREDICATE_KIND: t.ClassVar = {"VALUE", "SCALAR", "ARRAY", "OBJECT"}
++    IS_JSON_PREDICATE_KIND: t.ClassVar = {"VALUE", "SCALAR", "ARRAYX", "OBJECT"}
+ 
+     ODBC_DATETIME_LITERALS: t.ClassVar[dict[str, type[exp.Expr]]] = {}
+ 

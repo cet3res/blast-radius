@@ -333,6 +333,41 @@ class CheckPhaseTests(unittest.TestCase):
         self.assertEqual(self.phases({}, {'tests/fixtures/y.csv': None}), {})
 
 
+class KeyNarrowingTests(unittest.TestCase):
+    """Changed dict/set entries select the tests that read those entries (tools/build_keys.py)."""
+
+    def setUp(self):
+        from types import SimpleNamespace
+        from selector import Selector, key_digest
+        baseline = {'m:C\0D': {'k1': 'a', 'k2': 'b'}, 'm:C\0S': {'x': '1'}}
+        key_map = {
+            'sets': [[1], [2], [3], [7]],
+            'broken': [9],
+            'containers': {
+                'm:C\0D': {'keys': {'k1': 0, 'k3': 1}, 'full': 2, 'digest': key_digest(baseline['m:C\0D'])},
+                'm:C\0S': {'keys': {'x': 3}, 'full': None, 'digest': 'stale'},
+            },
+        }
+        self.selector = Selector.__new__(Selector)
+        self.selector.m = SimpleNamespace(key_map=lambda: key_map)
+        self.selector.state = SimpleNamespace(baseline_keys=lambda: baseline)
+        self.selector.key_tests = set()
+
+    def test_changed_and_added_keys(self):
+        changed = {'m:C': {'D': 'd', 'other': 'd'}}
+        keyed = {'m:C\0D': {'k1': 'A', 'k2': 'b', 'k3': 'c'}}  # k1 changed, k3 added
+        left = self.selector.narrow_containers(changed, keyed, None)
+        self.assertEqual(left, {'m:C': {'other': 'd'}})
+        self.assertEqual(self.selector.key_tests, {1, 2, 3, 9})  # k1 and k3 readers, full reader, broken
+
+    def test_unmapped_or_stale_containers_keep_the_usual_handling(self):
+        changed = {'m:C': {'S': 'd'}, '<init>': {'modules': 'x'}}
+        left = self.selector.narrow_containers(changed, {'m:C\0S': {}}, None)
+        self.assertEqual(left, changed)  # digest mismatch
+        self.assertEqual(self.selector.key_tests, set())
+        self.assertEqual(self.selector.narrow_containers({'m:C': {'D': 'd'}}, {}, None), {'m:C': {'D': 'd'}})
+
+
 class CommandTests(unittest.TestCase):
     def test_import_only(self):
         code = "import sqlglot; assert len(sqlglot.Dialect._classes) == 1; print('Success')"

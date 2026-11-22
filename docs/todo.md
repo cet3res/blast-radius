@@ -21,3 +21,6 @@
 - [x] Differential checks for `test_execute_tpcds` and `test_optimized_tpch` (validation: -26% simulated on sample-like changes, 0 misses).
 - [x] Submit this branch and record the board result in `docs/results.md` (163.1 s).
 - [ ] Run only the TPC-DS queries whose steps differ (see HANDOFF next steps).
+- [x] Key-level narrowing of changed dict/set entries (plan step 3): mutants-1 -11.5%, entries set -47%, 0 misses on 428 commits.
+- [x] Run fingerprint/check children in sqlglot's test mode (`import unittest`): fixed a pre-existing miss.
+- [ ] Per-case verification of optimizer fixture tests (`check_file`: test_tpcds, test_qualify_columns...) (plan step 5).

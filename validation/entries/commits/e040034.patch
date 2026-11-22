@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/redshift.py b/sqlglot/generators/redshift.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/redshift.py
++++ b/sqlglot/generators/redshift.py
+@@ -228,7 +228,6 @@
+         "on",
+         "only",
+         "open",
+-        "or",
+         "order",
+         "outer",
+         "overlaps",

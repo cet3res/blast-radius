@@ -112,6 +112,32 @@ fingerprint): a patch that makes the optimizer loop forever (tested with
 `while True: pass` in `qualify_columns`) costs 25 s and keeps the test. After 150 s
 of wall time no more checks are made, after 210 s no more patched imports.
 
+## v4: changed dict and set entries (November 22, 2026)
+
+Same machine and locally timed catalog as v3. `validation/entries` is a new set: 64
+single-entry changes to dict and set literals at class or module level (an entry
+line deleted, a string in a key or value altered, two values swapped; `tools/mutants.py
+generate --entries --seed 4`) with real outcomes from the whole catalog.
+
+| Set | Commits | v3 | v4 | Oracle | Misses |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| mutants-1 | 135 | 540.8 | **478.4** | 289.0 | 0 |
+| mutants-2-extended | 120 | 702.7 | **652.8** | 266.9 | 0 |
+| swaps | 109 | 160.2 | 160.2 | 6.4 | 0 |
+| entries (new) | 64 | 681.8 + 1 miss | **359.4** | 157.1 | 0 |
+
+The entries set exposed a miss that predates v4: removing `"expressions"` from
+`Select.arg_types` makes the duckdb generator's class body raise while it is
+imported, but only when `unittest` or `pytest` is loaded, because sqlglot validates
+expression arguments strictly in that case (`sqlglot.expressions.core.UNITTEST`).
+Fingerprint and check children never loaded `unittest`, so the import succeeded
+there. They now import it first, like every scored test run; the patch is detected as
+an import failure and selects everything.
+
+CPU is about the same as v3 (mutants-1 21.7 s here, 30.8 s in the container),
+since narrowed tables avoid some TPC checks. Container output is identical to the
+local run on mutants-1 and entries.
+
 ## Practice board
 
 | Commit | Score | Simulated | CPU | Misses |

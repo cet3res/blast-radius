@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -2024,7 +2024,7 @@
+         "try_cast",
+         "tuple",
+         "unpack",
+-        "verbose",
++        "verboseX",
+     }
+ 
+     UNWRAPPED_INTERVAL_VALUES = (exp.Literal, exp.Paren)

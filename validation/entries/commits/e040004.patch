@@ -1,0 +1,22 @@
+diff --git a/sqlglot/expressions/string.py b/sqlglot/expressions/string.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/string.py
++++ b/sqlglot/expressions/string.py
+@@ -53,7 +53,7 @@
+ class Format(Expression, Func):
+     """Formats values using printf syntax, or brace syntax when is_fmt is set."""
+ 
+-    arg_types = {"this": True, "expressions": False, "is_fmt": False}
++    arg_types = {"this": False, "expressions": False, "is_fmt": False}
+     is_var_len_args = True
+ 
+ 
+@@ -490,7 +490,7 @@
+ 
+ class RegexpSplit(Expression, Func):
+     # "mode" is Dremio-specific, appended after "limit" for from_arg_list compat
+-    arg_types = {"this": True, "expression": True, "limit": False, "mode": False}
++    arg_types = {"this": True, "expression": True, "limit": False, "mode": True}
+ 
+ 
+ class RegexpSubstr(Expression, Func):

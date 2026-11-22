@@ -1,0 +1,12 @@
+diff --git a/sqlglot/typing/snowflake.py b/sqlglot/typing/snowflake.py
+index 0000000..1111111 100644
+--- a/sqlglot/typing/snowflake.py
++++ b/sqlglot/typing/snowflake.py
+@@ -382,7 +382,6 @@
+         expr_type: {"returns": exp.DType.DOUBLE}
+         for expr_type in {
+             exp.ApproxPercentileEstimate,
+-            exp.ApproximateSimilarity,
+             exp.CosineDistance,
+             exp.DotProduct,
+             exp.EuclideanDistance,

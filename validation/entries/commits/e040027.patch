@@ -1,0 +1,22 @@
+diff --git a/sqlglot/expressions/core.py b/sqlglot/expressions/core.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/core.py
++++ b/sqlglot/expressions/core.py
+@@ -1853,7 +1853,7 @@
+ 
+ 
+ class Star(Expression):
+-    arg_types = {"except_": False, "replace": False, "rename": False, "ilike": False}
++    arg_types = {"except_": False, "replace": False, "rename": "YEAR", "ilike": False}
+ 
+     @property
+     def name(self) -> str:
+@@ -2069,7 +2069,7 @@
+         "S": "SECOND",
+         "US": "MICROSECOND",
+         "W": "WEEK",
+-        "Y": "YEAR",
++        "Y": False,
+     }
+ 
+     VAR_LIKE: t.ClassVar[tuple[Type[Expr], ...]] = (Column, Literal, Var)

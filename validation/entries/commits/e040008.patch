@@ -1,0 +1,22 @@
+diff --git a/sqlglot/parsers/singlestore.py b/sqlglot/parsers/singlestore.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/singlestore.py
++++ b/sqlglot/parsers/singlestore.py
+@@ -157,7 +157,7 @@
+     NO_PAREN_FUNCTIONS = {
+         **MySQLParser.NO_PAREN_FUNCTIONS,
+         TokenType.UTC_DATE: exp.UtcDate,
+-        TokenType.UTC_TIME: exp.UtcTime,
++        TokenType.UTC_TIME: _show_parser("INDEX", target="FROM"),
+         TokenType.UTC_TIMESTAMP: exp.UtcTimestamp,
+     }
+ 
+@@ -211,7 +211,7 @@
+         "GROUPS": _show_parser("GROUPS"),
+         "GROUPS FOR ROLE": _show_parser("GROUPS FOR ROLE", target=True),
+         "GROUPS FOR USER": _show_parser("GROUPS FOR USER", target=True),
+-        "INDEXES": _show_parser("INDEX", target="FROM"),
++        "INDEXES": exp.UtcTime,
+         "KEYS": _show_parser("INDEX", target="FROM"),
+         "LINKS": _show_parser("LINKS", target="ON"),
+         "LOAD ERRORS": _show_parser("LOAD ERRORS"),

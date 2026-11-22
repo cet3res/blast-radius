@@ -1,0 +1,22 @@
+diff --git a/sqlglot/parsers/spark.py b/sqlglot/parsers/spark.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/spark.py
++++ b/sqlglot/parsers/spark.py
+@@ -87,7 +87,7 @@
+         "DATEADD": _build_dateadd,
+         "MAKE_TIMESTAMP": exp.TimestampFromParts.from_arg_list,
+         "TIMESTAMPADD": _build_dateadd,
+-        "TIMESTAMPDIFF": build_date_delta(exp.TimestampDiff),
++        "TIMESTAMPDIFF": build_as_cast("TIMESTAMP_LTZ"),
+         "TRY_ADD": exp.SafeAdd.from_arg_list,
+         "TRY_DIVIDE": exp.SafeDivide.from_arg_list,
+         "TRY_MULTIPLY": exp.SafeMultiply.from_arg_list,
+@@ -95,7 +95,7 @@
+         "DATEDIFF": _build_datediff,
+         "DATE_DIFF": _build_datediff,
+         "JSON_OBJECT_KEYS": exp.JSONKeys.from_arg_list,
+-        "TIMESTAMP_LTZ": build_as_cast("TIMESTAMP_LTZ"),
++        "TIMESTAMP_LTZ": build_date_delta(exp.TimestampDiff),
+         "TIMESTAMP_NTZ": build_as_cast("TIMESTAMP_NTZ"),
+         "TRY_ELEMENT_AT": lambda args: exp.Bracket(
+             this=seq_get(args, 0),

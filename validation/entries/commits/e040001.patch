@@ -1,0 +1,13 @@
+diff --git a/sqlglot/dialects/tsql.py b/sqlglot/dialects/tsql.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/tsql.py
++++ b/sqlglot/dialects/tsql.py
+@@ -38,7 +38,7 @@
+         "QQ": "QUARTER",
+         "M": "MONTH",
+         "Y": "DAYOFYEAR",
+-        "WW": "WEEK",
++        "WW": "WEEKX",
+         "N": "MINUTE",
+         "SS": "SECOND",
+         "MCS": "MICROSECOND",

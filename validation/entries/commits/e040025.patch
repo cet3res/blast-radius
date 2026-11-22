@@ -1,0 +1,22 @@
+diff --git a/sqlglot/parsers/bigquery.py b/sqlglot/parsers/bigquery.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/bigquery.py
++++ b/sqlglot/parsers/bigquery.py
+@@ -235,7 +235,7 @@
+         "CONTAINS_SUBSTR": _build_contains_substring,
+         "DATE": _build_date,
+         "DATE_ADD": build_date_delta_with_interval(exp.DateAdd),
+-        "DATE_DIFF": build_date_diff(exp.DateDiff),
++        "DATE_DIFF": _build_extract_json_with_default_path(exp.JSONExtractScalar),
+         "DATE_SUB": build_date_delta_with_interval(exp.DateSub),
+         "DATE_TRUNC": lambda args: _normalize_bare_week(
+             exp.DateTrunc(
+@@ -262,7 +262,7 @@
+         "JSON_QUERY": parser.build_extract_json_with_path(exp.JSONExtract),
+         "JSON_QUERY_ARRAY": _build_extract_json_with_default_path(exp.JSONExtractArray),
+         "JSON_STRIP_NULLS": _build_json_strip_nulls,
+-        "JSON_VALUE": _build_extract_json_with_default_path(exp.JSONExtractScalar),
++        "JSON_VALUE": build_date_diff(exp.DateDiff),
+         "JSON_VALUE_ARRAY": _build_extract_json_with_default_path(exp.JSONValueArray),
+         "LAST_DAY": lambda args: _normalize_bare_week(exp.LastDay.from_arg_list(args)),
+         "LENGTH": lambda args: exp.Length(this=seq_get(args, 0), binary=True),

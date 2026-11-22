@@ -1,0 +1,12 @@
+diff --git a/sqlglot/expressions/query.py b/sqlglot/expressions/query.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/query.py
++++ b/sqlglot/expressions/query.py
+@@ -1214,7 +1214,6 @@
+     arg_types = {
+         "with_": False,
+         "kind": False,
+-        "expressions": False,
+         "hint": False,
+         "distinct": False,
+         "into": False,

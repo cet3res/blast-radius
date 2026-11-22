@@ -15,6 +15,7 @@ python tools/evaluate.py validation/mutants-1 --catalog sample/tests.json
 | --- | ---: | --- |
 | `mutants-1` | 135 | `tools/mutants.py generate SOURCE OUT --count 240 --seed 1` (sample-like: operator/constant flips, comment lines, fixture edits, combinations); first 135 with outcomes |
 | `mutants-2-extended` | 120 | `... --count 120 --seed 2 --extended` (line delete/duplicate/swap, test-file edits, docstring edits, combinations) |
+| `entries` | 64 | `... generate --entries --count 64 --seed 4`: one dict/set literal entry deleted, a string in it altered, or two values swapped |
 | `swaps` | 109 | `is`/`==` and `is not`/`!=` swaps at comparison sites from the type profile: 89 the selector proves equivalent, 20 controls |
 
 Outcomes come from `tools/mutants.py truth SOURCE OUT sample/tests.json --workers N`
