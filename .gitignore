@@ -9,3 +9,4 @@ __pycache__/
 baseline-code.marshal
 baseline-state.json
 prepared.json
+baseline-checks.json

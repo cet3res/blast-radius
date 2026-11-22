@@ -222,6 +222,116 @@ class ScheduleTests(unittest.TestCase):
         self.assertEqual(cost, 28817 + 4000)
 
 
+class DumperTests(unittest.TestCase):
+    """The structural text the TPC checks compare (fingerprint.Dumper)."""
+
+    def setUp(self):
+        from fingerprint import Dumper
+
+        class Node:
+            __slots__ = ('args', 'parent', 'comments', '_hash')
+
+            def __init__(self, **args):
+                self.args, self.parent, self.comments, self._hash = args, None, None, None
+                for value in args.values():
+                    for item in value if isinstance(value, list) else [value]:
+                        if isinstance(item, Node):
+                            item.parent = self
+
+        class Step:
+            def __init__(self, name):
+                self.name, self.dependencies, self.dependents = name, set(), set()
+
+        self.Node, self.Step, self.dumper = Node, Step, Dumper(Node, Step)
+
+    def test_everything_but_parent_links_and_hash_counts(self):
+        Node, d = self.Node, self.dumper
+        a, b = Node(this='x', expressions=[Node(this='y')]), Node(this='x', expressions=[Node(this='y')])
+        b._hash = 123
+        self.assertEqual(d(a), d(b))
+        b.comments = ['c']
+        self.assertNotEqual(d(a), d(b))
+        c = Node(this='x', expressions=[Node(this='y')])
+        c.args['expressions'][0].parent = None  # a child that does not point back
+        self.assertNotEqual(d(a), d(c))
+        self.assertNotEqual(d(Node(this='x', y='z')), d(Node(y='z', this='x')))  # arg order is kept
+
+    def test_plan_steps(self):
+        Step, d = self.Step, self.dumper
+        root, leaf = Step('root'), Step('leaf')
+        root.dependencies.add(leaf)
+        leaf.dependents.add(root)
+        text = d(root)
+        self.assertIn("dependents='root'", text)
+        d.steps = {}
+        leaf.limit = 3
+        self.assertNotEqual(d(root), text)
+
+
+class FixtureTests(unittest.TestCase):
+    def test_pairs_from_memory(self):
+        from fingerprint import TPCDS_FIXTURE, TPCH_FIXTURE, fixture_pairs
+        source = (
+            'import os\nFILE_DIR = os.path.dirname(__file__)\nFIXTURES_DIR = os.path.join(FILE_DIR, "fixtures")\n'
+            'def load_sql_fixture_pairs(filename):\n'
+            '    with open(os.path.join(FIXTURES_DIR, filename), encoding="utf-8") as f:\n'
+            '        parts = f.read().split(";")\n'
+            '        for i in range(0, len(parts) - 1, 2):\n'
+            '            yield {}, parts[i].strip(), parts[i + 1].strip()\n'
+            'TPCDS_SCHEMA = {}\n'
+        )
+        _, tpcds, tpch = fixture_pairs(source, {TPCDS_FIXTURE: 'a;b;c;d;', TPCH_FIXTURE: 'x;y;'})
+        self.assertEqual(tpcds, [({}, 'a', 'b'), ({}, 'c', 'd')])
+        self.assertEqual(tpch, [({}, 'x', 'y')])
+
+
+class CheckPhaseTests(unittest.TestCase):
+    """When a selected TPC test can be judged by recomputing its sqlglot steps."""
+
+    def setUp(self):
+        from types import SimpleNamespace
+        from selector import Selector
+        fixture = 'tests/fixtures/optimizer/tpc-ds/tpc-ds.sql'
+        self.m = SimpleNamespace(
+            sources={'sqlglot/a.py': 'def f():\n    RUN_NAME = 1\n    x = 2\n    y = 3\n'},
+            sets=[[0, 1], [1]],
+            data={'proxies': {'fixtures': {fixture: ''}}, 'reads': {'tests/fixtures/x.csv': 1}, 'listings': {}},
+            line_sets=lambda path: ({2: 0, 3: 0, 4: 0}, set()) if path == 'sqlglot/a.py' else ({}, set()),
+            units=lambda path: {},
+        )
+        self.proxy = {'name': 'tpcds', 'phases': ('optimize',), 'names': None, 'run': {'sqlglot/a.py': {2}},
+                      'queries': {'optimize': {'sqlglot/a.py': {3: 0b101}}}}
+        self.selector = Selector.__new__(Selector)
+        self.selector.m, self.selector.last_changed = self.m, None
+        self.fixture = fixture
+
+    def phases(self, info, data=None, changed=None):
+        self.selector.py_info, self.selector.last_changed = info, changed
+        return self.selector.check_phases(1, self.proxy, data or {})
+
+    def test_steps_and_queries(self):
+        self.assertEqual(self.phases({'sqlglot/a.py': ({3}, False, set())}), {'optimize': 0b101})
+        self.assertIsNone(self.phases({'sqlglot/a.py': ({2}, False, set())}))  # run phase
+        self.assertIsNone(self.phases({'sqlglot/a.py': ({4}, False, set())}))  # run by the test, by no step
+        self.assertIsNone(self.phases({'sqlglot/a.py': ({3}, False, {'X'})}))  # long-lived state
+        self.assertIsNone(self.phases({'tests/helpers.py': ({1}, False, set())}))
+        self.assertEqual(self.phases({'tests/test_other.py': ({1}, False, set())}), {})
+
+    def test_import_time_state(self):
+        self.assertEqual(self.phases({}, changed={'sqlglot.a:K': {'DATA': 'd'}}), {'optimize': -1})
+        self.assertIsNone(self.phases({}, changed={'sqlglot.a:K': {'method': 'c'}}))
+        self.assertIsNone(self.phases({}, changed={'sqlglot.a:K': {'RUN_NAME': 'd'}}))  # read by the run phase
+        self.assertIsNone(self.phases({}, changed={'<init>': {'modules': 'd'}}))
+
+    def test_data_files(self):
+        self.assertEqual(self.phases({}, {self.fixture: 'new text'}), {'inputs': -1})
+        self.assertIsNone(self.phases({}, {self.fixture: None}))
+        self.selector.read_tests = lambda path: {1} if path == 'tests/fixtures/x.csv' else set()
+        self.selector.listing_tests = lambda path: set()
+        self.assertIsNone(self.phases({}, {'tests/fixtures/x.csv': None}))
+        self.assertEqual(self.phases({}, {'tests/fixtures/y.csv': None}), {})
+
+
 class CommandTests(unittest.TestCase):
     def test_import_only(self):
         code = "import sqlglot; assert len(sqlglot.Dialect._classes) == 1; print('Success')"
