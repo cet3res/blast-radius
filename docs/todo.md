@@ -13,8 +13,11 @@
 - [x] Operand-type profile of `is`/`==` comparisons; skip provably equivalent swaps (sample 165.8 s -> 115.6 s).
 - [x] Validate on 364 mutations with real outcomes (sample-like, unseen kinds, swaps): 0 misses.
 - [x] Cut selector CPU about 50% (board run 1: 11.5 s CPU): baseline prepared at build, fork server, targeted compile, memoized scans.
-- [ ] Verify Docker image under competition limits (requires Docker; not installed here).
+- [x] Verify Docker image under competition limits (Linux machine with Docker; output identical to local).
 - [ ] Rebuild the map on Linux AMD64 in the pinned image and compare with the macOS map.
 - [x] Handoff notes (`docs/HANDOFF.md`), validation sets with outcomes (`validation/`), `tools/evaluate.py`.
 - [ ] Submit `0919b56` (CPU cut) and record the board result in `docs/results.md`.
 - [ ] Class-keyed dict narrowing for import-time dict/set changes (estimated 5-9 s on ~40 commits).
+- [x] Differential checks for `test_execute_tpcds` and `test_optimized_tpch` (validation: -26% simulated on sample-like changes, 0 misses).
+- [ ] Submit this branch and record the board result in `docs/results.md`.
+- [ ] Run only the TPC-DS queries whose steps differ (see HANDOFF next steps).

@@ -40,6 +40,16 @@ CODING = re.compile(r'^[ \t\f]*#.*?coding[:=]')
 # pytest reads these from the repository root; a conftest.py is loaded from any test directory.
 CONFIG_FILES = ('pyproject.toml', 'setup.cfg', 'setup.py', 'pytest.ini', 'tox.ini', 'conftest.py', '.coveragerc')
 WORKER_MS = 2000
+# CPU seconds a forked child may use: a check recomputes at most every TPC-DS step
+# (a few seconds); a fingerprint imports everything once.
+CHECK_CPU_LIMIT = 25
+FINGERPRINT_CPU_LIMIT = 60
+# Wall-clock guards for the whole run (the scorer allows 4.5 minutes): past the
+# first, selected TPC tests are kept without checks; past the second, commits that
+# need a patched import select every test.
+CHECKS_UNTIL = 150.0
+IMPORTS_UNTIL = 210.0
+CHECK_PHASES = ('transpile', 'parse', 'optimize', 'plan')
 MAX_WORKERS = 8
 HERE = Path(__file__).resolve().parent
 
@@ -737,6 +747,22 @@ class DependencyMap:
         for dialect, members in data['units'].items():
             for member in members:
                 self.unit_of.setdefault(member, set()).add(dialect)
+        # Differential checks for the expensive TPC tests (tools/build_proxies.py).
+        self.proxies = {}
+        proxies = data.get('proxies')
+        if proxies and 'tests/helpers.py' in self.sources:
+            index = {test_id: i for i, test_id in enumerate(self.map_ids)}
+            for test_id, name, phases in ((proxies['tests'][0], 'tpcds', CHECK_PHASES),
+                                          (proxies['tests'][1], 'tpch_opt', ('transpile',))):
+                if test_id in index and test_id in proxies['run'] and name in proxies['queries']:
+                    queries = proxies['queries'][name]
+                    self.proxies[index[test_id]] = {
+                        'name': name, 'phases': phases, 'names': None,
+                        'run': {p: set(v) for p, v in proxies['run'][test_id].items()},
+                        # phase -> path -> line -> bitmask of the queries whose step runs it
+                        'queries': {ph: {p: dict(map(tuple, pairs)) for p, pairs in queries.get(ph, {}).items()}
+                                    for ph in phases},
+                    }
         self.import_only_spawners = set()
         self.other_spawners = set()
         for index, commands in data['subprocess'].items():
@@ -871,22 +897,31 @@ class ImportState:
     built (`--prepare`, not charged), or else once per run into the temp directory.
     """
 
-    def __init__(self, sources: dict[str, str], prepared: Path = HERE):
+    def __init__(self, sources: dict[str, str], prepared: Path = HERE, check_inputs: dict | None = None):
         self.sources = {k: v for k, v in sources.items() if k.startswith('sqlglot/')}
+        # tests/helpers.py and the TPC fixtures, for the differential checks (fingerprint.run_checks)
+        self.check_inputs = check_inputs
         self.runs = 0
-        self.stamp = state_stamp(self.sources)
+        self.checks_run = 0
+        self.stamp = state_stamp(self.sources, check_inputs)
         self.temporary = []
-        self.code = self.state = None
+        self.code = self.state = self.checks = None
         meta = prepared / 'prepared.json'
         try:
             if json.loads(meta.read_text()) == self.stamp:
                 code, state = prepared / 'baseline-code.marshal', prepared / 'baseline-state.json'
                 if code.is_file() and state.is_file():
                     self.code, self.state = str(code), str(state)
+                    checks = prepared / 'baseline-checks.json'
+                    if check_inputs is not None and checks.is_file():
+                        self.checks = str(checks)
         except (OSError, ValueError):
             pass
         self.failed = False
+        self.checks_failed = False
         self.server = None
+        self.seconds = {}  # wall seconds spent waiting on the server, by request kind
+        self.started = time.monotonic()
 
     def close(self):
         if self.server is not None:
@@ -933,9 +968,8 @@ class ImportState:
             data += chunk
         return data.split(b'\n', 1)[0].decode()
 
-    def ask(self, overrides) -> dict | None:
-        """Fingerprint the patched import in a fork of a server holding the baseline."""
-        self.runs += 1
+    def ask(self, request: dict) -> dict | None:
+        """Answer a request (fingerprint or checks) in a fork of a server holding the baselines."""
         if self.server is None:
             try:
                 self.server = subprocess.Popen(
@@ -943,22 +977,28 @@ class ImportState:
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                     env=self.env(), cwd=str(HERE), start_new_session=True, bufsize=0,
                 )
-                self.server.stdin.write((json.dumps({'cache': self.code, 'baseline': self.state}) + '\n').encode())
+                config = {'cache': self.code, 'baseline': self.state, 'checks': self.checks}
+                self.server.stdin.write((json.dumps(config) + '\n').encode())
                 self.server.stdin.flush()
                 if self.readline(60) is None:
                     raise OSError('fingerprint server did not start')
             except OSError as error:
                 log('fingerprint server unavailable:', error)
                 self.kill_server()
+                if 'checks' in request:
+                    return None
                 self.runs -= 1
-                return self.run({'overrides': overrides, 'cache': self.code, 'baseline': self.state})
+                return self.run(dict(request, cache=self.code, baseline=self.state))
+        started = time.monotonic()
         try:
-            self.server.stdin.write((json.dumps({'overrides': overrides}) + '\n').encode())
+            self.server.stdin.write((json.dumps(request) + '\n').encode())
             self.server.stdin.flush()
         except OSError:
             self.kill_server()
             return None
-        line = self.readline(120)
+        line = self.readline(2 * int(request.get('cpu_limit') or 60) + 10)
+        kind = 'checks' if 'checks' in request else 'fingerprint'
+        self.seconds[kind] = self.seconds.get(kind, 0.0) + time.monotonic() - started
         if line is None:
             log('fingerprint timed out or died')
             self.kill_server()
@@ -997,6 +1037,18 @@ class ImportState:
         result = self.run({'sources': self.sources, 'cache': code, 'write_cache': True, 'write_state': state})
         return bool(result) and os.path.isfile(code) and os.path.isfile(state)
 
+    def prepare_checks(self, checks: str) -> bool:
+        """The pinned step results of the TPC tests (needs the compiled baseline modules)."""
+        if self.check_inputs is None or self.code is None:
+            return False
+        request = dict(self.check_inputs, cache=self.code, write_checks=checks,
+                       checks={'tpcds': {ph: -1 for ph in CHECK_PHASES}, 'tpch_opt': {'transpile': -1}})
+        result = self.run(request)
+        if not result or not os.path.isfile(checks):
+            return False
+        found = result['checks']
+        return all(isinstance(found.get(name), dict) for name in ('tpcds', 'tpch_opt'))
+
     def baseline(self) -> bool:
         if self.state is None and not self.failed:
             base = os.path.join(tempfile.gettempdir(), f'blast-radius-{os.getpid()}')
@@ -1008,10 +1060,39 @@ class ImportState:
                 self.failed = True
         return self.state is not None
 
+    def check_baseline(self) -> bool:
+        if self.checks is None and not self.checks_failed and self.baseline():
+            path = os.path.join(tempfile.gettempdir(), f'blast-radius-{os.getpid()}-checks.json')
+            self.temporary.append(path)
+            if self.prepare_checks(path):
+                self.checks = path
+                self.kill_server()  # restart it with the check baseline loaded
+            else:
+                self.checks_failed = True
+        return self.checks is not None
+
+    def verify(self, checks: dict, overrides: dict, fixtures: dict) -> dict:
+        """name -> True when the TPC test's recomputed step results equal the pinned ones."""
+        if not checks or self.check_inputs is None or not self.check_baseline():
+            return {}
+        self.checks_run += 1
+        if time.monotonic() - self.started > CHECKS_UNTIL:
+            return {}
+        request = {'checks': checks, 'overrides': overrides, 'helpers': self.check_inputs['helpers'],
+                   'fixtures': dict(self.check_inputs['fixtures'], **fixtures), 'cpu_limit': CHECK_CPU_LIMIT}
+        result = self.ask(request)
+        if result is None:
+            return {}
+        found = result.get('checks', {})
+        return {name: found.get(name) is True for name in checks}
+
     def changes(self, overrides):
+        if time.monotonic() - self.started > IMPORTS_UNTIL:
+            raise Everything('out of time for patched imports')
         if not self.baseline():
             raise Everything('baseline import state unavailable')
-        result = self.ask(overrides)
+        self.runs += 1
+        result = self.ask({'overrides': overrides, 'cpu_limit': FINGERPRINT_CPU_LIMIT})
         if result is None:
             raise Everything('patched sqlglot fails to import')
         if result['new_failures']:
@@ -1019,13 +1100,15 @@ class ImportState:
         return result['changed'], None
 
 
-def state_stamp(sources) -> dict:
+def state_stamp(sources, check_inputs=None) -> dict:
     """What prepared baseline files must have been built from: these sources, this Python."""
     import hashlib
     import importlib.util
     digest = hashlib.sha256()
     for path in sorted(sources):
         digest.update(path.encode() + b'\0' + sources[path].encode('utf-8', 'surrogatepass') + b'\0')
+    if check_inputs is not None:
+        digest.update(json.dumps(check_inputs, sort_keys=True).encode('utf-8', 'surrogatepass'))
     fingerprint = (HERE / 'fingerprint.py').read_bytes() if (HERE / 'fingerprint.py').is_file() else b''
     return {
         'sources': digest.hexdigest(),
@@ -1035,17 +1118,31 @@ def state_stamp(sources) -> dict:
     }
 
 
+def check_inputs_of(data: dict) -> dict | None:
+    proxies = data.get('proxies')
+    helpers = data.get('sources', {}).get('tests/helpers.py')
+    if not proxies or helpers is None:
+        return None
+    return {'helpers': helpers, 'fixtures': proxies['fixtures']}
+
+
 def prepare(map_path: Path) -> int:
-    """Build-time: write the baseline import state and compiled modules next to the selector."""
+    """Build-time: write the baseline import state, compiled modules and TPC step results."""
     with gzip.open(map_path, 'rt') as f:
-        sources = json.load(f)['sources']
-    state = ImportState(sources, prepared=Path('/nonexistent'))
-    code, saved = HERE / 'baseline-code.marshal', HERE / 'baseline-state.json'
+        data = json.load(f)
+    state = ImportState(data['sources'], prepared=Path('/nonexistent'), check_inputs=check_inputs_of(data))
+    code, saved, checks = HERE / 'baseline-code.marshal', HERE / 'baseline-state.json', HERE / 'baseline-checks.json'
     if not state.prepare(str(code), str(saved)):
         log('prepare failed; the baseline will be computed at run time')
         return 0
+    state.code = str(code)
+    written = [code, saved]
+    if state.prepare_checks(str(checks)):
+        written.append(checks)
+    else:
+        log('check baseline failed; it will be computed at run time')
     (HERE / 'prepared.json').write_text(json.dumps(state.stamp))
-    for path in (code, saved, HERE / 'prepared.json'):
+    for path in written + [HERE / 'prepared.json']:
         os.chmod(path, 0o644)
     log('prepared baseline import state')
     return 0
@@ -1056,7 +1153,9 @@ def prepare(map_path: Path) -> int:
 class Selector:
     def __init__(self, dependency_map: DependencyMap):
         self.m = dependency_map
-        self.state = ImportState(dependency_map.sources)
+        self.state = ImportState(dependency_map.sources, check_inputs=check_inputs_of(dependency_map.data))
+        self.py_info = {}
+        self.last_changed = None
         self._texts = None
         self._references = None
 
@@ -1125,6 +1224,10 @@ class Selector:
         import_time_sources = {}
         new_modules = set()
         spawners = set()
+        self.py_info = {}
+        self.last_changed = None
+        # What the differential checks need: patched sqlglot sources, data files (new text or None).
+        patched, data = {}, {}
         for f in files:
             if f.special:
                 raise Everything('rename or copy')
@@ -1133,6 +1236,7 @@ class Selector:
                 if f.old != f.new or path.endswith('.py') or path not in m.data['reads'] or path in m.data['read_at_import']:
                     raise Everything('binary change')
                 tests |= self.read_tests(path)
+                data[path] = None
                 continue
             if f.old is None and f.new is None:
                 continue  # mode change only
@@ -1155,6 +1259,7 @@ class Selector:
                     new_modules.add(path)
                     tests |= self.listing_tests(path)
                     continue
+                data[path] = None
                 tests |= self.listing_tests(path)
                 tests |= self.read_tests(path)
                 if explain is not None:
@@ -1165,6 +1270,8 @@ class Selector:
                 found, import_time = self.python_change(
                     path, m.sources[path], new_text, explain, edited_lines(f.hunks), touched_new_lines(f.hunks))
                 tests |= found
+                if path.startswith('sqlglot/'):
+                    patched[path] = new_text
                 if import_time:
                     if path.startswith('sqlglot/'):
                         import_time_sources[path] = new_text
@@ -1176,7 +1283,9 @@ class Selector:
             if not path.startswith('tests/') and path.endswith('.py'):
                 found = self.read_tests(path)
                 tests |= found
+                data[path] = None
                 continue
+            data[path] = self.patched_fixture(path, f.hunks)
             tests |= self.read_tests(path)
             if path.startswith('tests/') and path not in m.data['reads']:
                 tests |= self.unread_fixture(path)
@@ -1189,7 +1298,144 @@ class Selector:
                 spawners |= m.import_only_spawners
         if import_time_sources or tests:
             spawners |= m.other_spawners
+        if m.proxies and not new_modules:
+            try:
+                tests = self.prune_by_checks(tests, patched, data, explain)
+            except Exception as error:  # noqa: BLE001 - a failed check only keeps the TPC tests
+                log(f'check error {error!r}')
         return tests, spawners
+
+    # -- differential checks of the expensive TPC tests
+
+    def patched_fixture(self, path, hunks):
+        fixtures = (self.m.data.get('proxies') or {}).get('fixtures', {})
+        if path not in fixtures:
+            return None
+        try:
+            return apply_hunks(fixtures[path], hunks)
+        except Everything:
+            return None
+
+    def run_names(self, proxy) -> set[str]:
+        """Identifiers on the lines a TPC test runs outside its checked steps."""
+        if proxy['names'] is None:
+            names = set()
+            for path, lines in proxy['run'].items():
+                text = self.m.sources.get(path)
+                if text is None:
+                    continue
+                source = text.split('\n')
+                units = self.m.units(path)
+                for line in lines:
+                    for number in units.get(line, (line,)):
+                        if 0 < number <= len(source):
+                            names.update(re.findall(r'[A-Za-z_]\w*', source[number - 1]))
+            proxy['names'] = names
+        return proxy['names']
+
+    def naming_lines(self, path, names) -> set[int]:
+        """Lines of a source file whose statement names one of `names`."""
+        key = (path, frozenset(names))
+        cache = self.__dict__.setdefault('_naming', {})
+        if key not in cache:
+            text = self.m.sources.get(path, '')
+            found = set()
+            if any(name in text for name in names):
+                pattern = re.compile(r'(?<![\w])(?:' + '|'.join(map(re.escape, sorted(names))) + r')(?![\w])')
+                starts = self.line_starts(path)
+                units = self.m.units(path)
+                for match in pattern.finditer(text):
+                    line = bisect.bisect_right(starts, match.start())
+                    found.update(units.get(line, (line,)))
+            cache[key] = found
+        return cache[key]
+
+    def check_phases(self, index, proxy, data) -> dict | None:
+        """Steps to recompute for a selected TPC test ({phase: query bitmask, -1 for all,
+        'inputs' when a TPC fixture changed}), or None when the test must run.
+
+        It must run when the edit reaches code it runs outside the checked steps, writes
+        long-lived state, changes import-time state its run phase could read, edits its
+        test module or helpers, or changes a file it reads other than the TPC fixtures.
+        """
+        m = self.m
+        run = proxy['run']
+        phases = {}
+        for path, (lines, import_time, shared) in self.py_info.items():
+            if not path.startswith('sqlglot/'):
+                if path in ('tests/test_executor.py', 'tests/helpers.py', 'tests/__init__.py'):
+                    return None
+                continue  # another test module: not imported by tests/test_executor.py
+            if shared or lines & run.get(path, set()):
+                return None
+            known = set(run.get(path, ()))
+            for ph in proxy['phases']:
+                per_line = proxy['queries'][ph].get(path, {})
+                known.update(per_line)
+                for line in lines:
+                    if line in per_line:
+                        phases[ph] = phases.get(ph, 0) | per_line[line]
+            sets, _ = m.line_sets(path)
+            for line in lines - known:
+                sid = sets.get(line)
+                if sid is not None and index in m.sets[sid]:
+                    return None  # the test runs it, but no recorded step does
+        if self.last_changed:
+            names = self.run_names(proxy)
+            changed = set()
+            for owner, attrs in self.last_changed.items():
+                if owner in ('<init>', '<runtime>') or attrs is None:
+                    return None
+                module = owner.startswith('module:')
+                for attr, kind in attrs.items():
+                    if not attr.isidentifier() or attr.startswith('__') or attr in names:
+                        return None
+                    if not module and kind != 'd':
+                        return None  # methods are dispatched by computed names
+                    changed.add(attr)
+            # Import-time data is read by code that names it (as when selecting tests for
+            # it): recompute the steps of the queries that ran such a line.
+            for ph in proxy['phases']:
+                for path, per_line in proxy['queries'][ph].items():
+                    for line in self.naming_lines(path, changed) & per_line.keys():
+                        phases[ph] = phases.get(ph, 0) | per_line[line]
+        fixtures = (m.data.get('proxies') or {}).get('fixtures', {})
+        for path, text in data.items():
+            if path in fixtures:
+                if text is None:
+                    return None
+                phases['inputs'] = -1
+            elif index in self.read_tests(path) or index in self.listing_tests(path):
+                return None
+        return phases
+
+    def prune_by_checks(self, tests, patched, data, explain):
+        checks, todo = {}, {}
+        for index, proxy in self.m.proxies.items():
+            if index not in tests:
+                continue
+            phases = self.check_phases(index, proxy, data)
+            if phases is None:
+                if explain is not None:
+                    explain.append(f'check {proxy["name"]}: must run')
+                continue
+            todo[index] = proxy['name']
+            if phases:
+                checks[proxy['name']] = {ph: mask for ph, mask in phases.items() if ph != 'inputs'}
+        if not todo:
+            return tests
+        fixtures = {path: text for path, text in data.items()
+                    if path in (self.m.data.get('proxies') or {}).get('fixtures', {})}
+        verdict = self.state.verify(checks, patched, fixtures) if checks else {}
+        for index, name in todo.items():
+            ok = verdict.get(name) if name in checks else True
+            if explain is not None:
+                wanted = {ph: (bin(mask).count('1') if mask >= 0 else 'all') for ph, mask in checks.get(name, {}).items()}
+                explain.append(f'check {name} {wanted if name in checks else "unreached"}: '
+                               f'{"same, dropped" if ok else "differs"}')
+            if ok:
+                tests = tests - {index}
+        return tests
 
     def read_tests(self, path) -> set[int]:
         sid = self.m.data['reads'].get(path)
@@ -1253,6 +1499,7 @@ class Selector:
         differ = Differ(import_lines, self.m.import_lambdas(path), texts, edited,
                         module_level_names(old_tree) | module_level_names(new_tree), self.m.agreement(path))
         differ.block(old_tree.body, new_tree.body, old_tree, 'module')
+        self.py_info[path] = (set(differ.lines), differ.import_time, set(differ.shared))
         if not differ.lines and not differ.import_time and not differ.shared:
             if explain is not None:
                 explain.append(f'{path}: no syntax change')
@@ -1270,6 +1517,7 @@ class Selector:
 
     def import_state_change(self, sources, new_modules, explain):
         changed, _ = self.state.changes(sources)
+        self.last_changed = changed
         m = self.m
         new_names = {p[:-12].replace('/', '.') if p.endswith('/__init__.py') else p[:-3].replace('/', '.') for p in new_modules}
         tests = set()
@@ -1472,7 +1720,10 @@ def main():
     sys.stdout.write('\n'.join(lines) + ('\n' if lines else ''))
     sys.stdout.flush()
     runs = selector.state.runs if selector else 0
-    log(f'{len(patches)} commits, {runs} import fingerprints, {time.process_time() - started:.2f}s CPU in selector')
+    waits = ', '.join(f'{k} {v:.2f}s' for k, v in sorted(selector.state.seconds.items())) if selector else ''
+    checks = selector.state.checks_run if selector else 0
+    log(f'{len(patches)} commits, {runs} import fingerprints, {checks} checks ({waits}), '
+        f'{time.process_time() - started:.2f}s CPU in selector')
 
 
 if __name__ == '__main__':

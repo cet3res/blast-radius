@@ -42,3 +42,4 @@ test:
 map:
 	$(PYTHON) tools/build_map.py "$(SOURCE)" sample/tests.json dependencies.json.gz
 	$(PYTHON) tools/build_profile.py "$(SOURCE)" dependencies.json.gz dependencies.json.gz --python $(PYTHON)
+	$(PYTHON) tools/build_proxies.py "$(SOURCE)" dependencies.json.gz dependencies.json.gz

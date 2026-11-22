@@ -25,12 +25,22 @@ entries are read by the organizers.
 | Starter (all tests, 3 workers) | — | 1210.5 s | 1614.1 s |
 | Coverage selector v2 + type profile | `2594d55` | 115.6 s, 0 misses | **186.3 s** = 174.774 simulated + ~11.5 CPU, 0 misses in all 3 runs |
 | CPU cut (same selections) | `0919b56` | 115.6 s, 0 misses | not submitted when this was written; expected ~180 |
+| TPC differential checks | this branch | not measured (no sample here) | not submitted yet; see estimate below |
+
+**v3 (TPC differential checks).** On the validation sets with real outcomes and a
+locally timed catalog: mutants-1 730.7 -> 540.8 s, mutants-2 849.6 -> 702.7 s,
+swaps 211.2 -> 160.2 s, 0 misses; CPU on mutants-1 13.1 -> 23.2 s (about what the
+board-scored `2594d55` uses there). If the practice set resembles mutants-1, the
+board should drop from 186.3 s to roughly 135-145 s. Reaching ~110 s would need
+selection close to the oracle on most commits: on mutants-1 the remaining excess
+(252 s over 135 commits) is mostly medium tests that coverage rightly selects and
+that pass (`test_scope` 2.8 s, `test_optimizer::test_tpcds` 2.3 s, ...).
 
 Validation with real outcomes (see `validation/`): 0 misses on all 364 synthetic
-changes. Docker is not installed on the machine this was built on, so `make
-sample` has **never** been run; the board submission is the only container test.
-The `--prepare` build step (added in `0919b56`) has not been through a real build
-yet: if it fails the selector falls back to computing the baseline at run time.
+changes. The image was built and run with the scorer's flags on a Linux machine
+with Docker (November 22): `--prepare` succeeds at build time and the output
+matches the local run exactly (`docs/results.md`). `make sample` itself still needs
+the sample tarball, which could not be downloaded there (joinbuilders.org blocked).
 
 ## How it works (files)
 
@@ -48,6 +58,12 @@ yet: if it fails the selector falls back to computing the baseline at run time.
     whole class). Config files, renames, deletions of modules, syntax errors,
     unparsable patches → every test.
   - Schedules with integer ms, LPT over 1..8 workers plus move/swap refinement.
+- TPC checks (`Selector.check_phases`, `prune_by_checks`, `fingerprint.run_checks`)
+  — when `test_execute_tpcds` or `test_optimized_tpch` is selected, decide from
+  per-step, per-query coverage (`tools/build_proxies.py`) whether recomputing the
+  touched steps (transpile / parse+pickle / optimize / plan) can stand in for the
+  test; if so, recompute them in the fork child and drop the test when every
+  structural dump equals the one computed at image build (`baseline-checks.json`).
 - `fingerprint.py` — imports a (patched) sqlglot from memory and hashes every
   module global and class attribute (closures, generated-function defaults,
   wrappers, dict/set contents order-insensitively; not function bodies). Runs as a
@@ -113,6 +129,15 @@ class/module data 294 s, fixtures 51 s.
 
 ## Reasonable next steps (estimates for a ~40-commit practice set)
 
+0. **Run differing TPC-DS queries** (~0-15 s, ~2 h): when a check finds a few
+   queries whose optimized tree or plan differs, or an edit reaches the run phase of
+   a few queries (needs per-query run-phase coverage), execute only those queries
+   with the patched executor and compare result rows with ones computed at build
+   time (needs the TPC-DS CSVs in the image). About 2% of validation commits.
+0. **Rule-level optimizer checks** (~2 s CPU): recompute only up to the last
+   touched optimizer rule; requires per-rule cold coverage and comparing the schema
+   object's caches too, since they carry state between rules.
+
 1. **Class-keyed dict narrowing** (~5-9 s, sound, ~1 h): when a changed dict/set
    attribute's changed keys are expression classes (`TRANSFORMS`,
    `EXPRESSION_METADATA`, ...), only tests that instantiated a changed key class (or
@@ -123,6 +148,14 @@ class/module data 294 s, fixtures 51 s.
 3. Targeted TPC-DS verification (see table) only if everything else is done.
 
 ## Pitfalls hit during development
+
+- Without `sample/`, rebuild a catalog: time the pinned suite with pytest
+  `--junitxml`, map ids to numbers in the map's `tests` order (0-based).
+- Check children must run with `PYTHONHASHSEED=0` like the build-time baseline: one
+  TPC-DS parse dump depends on string hashing order.
+- An import that fails in the fingerprint child is not always a failure for every
+  user of the module (mutants-2 duckdb cases: only test modules importing it at
+  collection failed), so narrowing "everything" there was rejected.
 
 - `pgrep -f "pattern"` in a wait loop matches the loop's own shell; use `[p]attern`.
 - Guard `rm -rf` targets built from variables (`"${VAR:?}"/...`).

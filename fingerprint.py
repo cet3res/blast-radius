@@ -21,6 +21,7 @@ import json
 import marshal
 import os
 import re
+import resource
 import sys
 import types
 
@@ -294,6 +295,12 @@ def main():
     request = json.loads(sys.stdin.read())
     cache = request.get('cache')
     codes = load_codes(cache) if cache and not request.get('write_cache') else {}
+    if 'checks' in request:
+        result = run_checks(request, codes)
+        if request.get('write_checks'):
+            write_atomic(request['write_checks'], lambda f: json.dump(result['checks'], f))
+        print(json.dumps(result))
+        return
     base = None
     if request.get('baseline'):
         with open(request['baseline']) as f:
@@ -389,6 +396,265 @@ def compute(request, codes, base):
     return {'ok': True}
 
 
+# ---------------------------------------------------------------- differential checks
+#
+# The TPC tests in tests/test_executor.py depend on sqlglot only through a few step
+# results that are cheap to recompute (see tools/build_proxies.py): transpiling each
+# query to duckdb, parsing it and pickling it to the pool worker, optimizing it inside
+# execute(), and planning it. The selector compares these, computed with the patched
+# sources, against the same computed at image build time for the pinned sources.
+
+TPCDS_FIXTURE = 'tests/fixtures/optimizer/tpc-ds/tpc-ds.sql'
+TPCH_FIXTURE = 'tests/fixtures/optimizer/tpc-h/tpc-h.sql'
+CHECK_PHASES = ('transpile', 'parse', 'optimize', 'plan')
+
+
+class Dumper:
+    """Deterministic text of everything an expression tree or plan holds.
+
+    Expressions: class, args in order, arg keys, indexes, comments, types, meta, and
+    whether every child points back at its parent. Plans: every step reachable from
+    the root with all its fields; dependents by name, sets sorted.
+    """
+
+    PLAIN = (bool, int, float, str, bytes, complex, type(None))
+
+    def __init__(self, expr_class, step_class):
+        self.expr_class = expr_class
+        self.step_class = step_class
+        self.steps = {}
+        self.slots = {}
+
+    def __call__(self, o):
+        t = type(o)
+        if t is str:
+            return 's' + repr(o)
+        if t in self.PLAIN:
+            return f'{t.__name__}:{o!r}'
+        if isinstance(o, self.expr_class):
+            out = []
+            self.expr(o, out)
+            return ''.join(out)
+        if isinstance(o, self.step_class):
+            return self.step(o)
+        if isinstance(o, enum.Enum):
+            return f'enum:{t.__module__}:{t.__qualname__}.{o.name}={self(o._value_)}'
+        if isinstance(o, type):
+            return f'class:{o.__module__}:{o.__qualname__}'
+        if isinstance(o, (list, tuple)):
+            return f'{t.__name__}[' + ','.join(map(self, o)) + ']'
+        if isinstance(o, dict):
+            return f'{t.__name__}{{' + ','.join(self(k) + ':' + self(v) for k, v in o.items()) + '}'
+        if isinstance(o, (set, frozenset)):
+            return f'{t.__name__}{{' + ','.join(sorted(map(self, o))) + '}'
+        if hasattr(o, '__dict__'):
+            return f'object:{t.__module__}:{t.__qualname__}{{' + ','.join(
+                k + '=' + self(v) for k, v in sorted(vars(o).items())) + '}'
+        text = repr(o)
+        return f'object:{t.__module__}:{t.__qualname__}:' + ('' if ' at 0x' in text else text)
+
+    def class_slots(self, cls):
+        slots = self.slots.get(cls)
+        if slots is None:
+            slots = []
+            for klass in cls.__mro__:
+                declared = getattr(klass, '__slots__', ())
+                for slot in (declared,) if isinstance(declared, str) else declared:
+                    if slot not in slots and slot not in ('args', 'parent', '_hash', '__weakref__', '__dict__'):
+                        slots.append(slot)
+            slots = self.slots[cls] = (f'E:{cls.__module__}:{cls.__qualname__}(', tuple(slots))
+        return slots
+
+    def expr(self, node, out):
+        head, slots = self.class_slots(type(node))
+        out.append(head)
+        for slot in slots:
+            value = getattr(node, slot, '<unset>')
+            out.append(slot)
+            out.append('=')
+            if value is None:
+                out.append('-')
+            elif isinstance(value, self.expr_class):
+                self.expr(value, out)
+            else:
+                out.append(self(value))
+            out.append(';')
+        extra = getattr(node, '__dict__', None)
+        if extra:
+            out.append('dict=' + self(extra) + ';')
+        expr_class = self.expr_class
+        for key, value in node.args.items():
+            out.append(key)
+            if isinstance(value, expr_class):
+                if value.parent is not node:
+                    out.append('!unlinked')
+                out.append('=')
+                self.expr(value, out)
+            elif type(value) is list:
+                out.append('=[')
+                for item in value:
+                    if isinstance(item, expr_class):
+                        if item.parent is not node:
+                            out.append('!unlinked')
+                        self.expr(item, out)
+                    else:
+                        out.append(self(item))
+                    out.append(',')
+                out.append(']')
+            else:
+                out.append('=')
+                out.append(self(value))
+            out.append(';')
+        out.append(')')
+
+    def step(self, step):
+        known = self.steps.get(id(step))
+        if known is not None:
+            return known
+        self.steps[id(step)] = f'<cycle {step.name}>'
+        fields = []
+        for key, value in sorted(vars(step).items()):
+            if key == 'dependents':
+                fields.append(key + '=' + ','.join(sorted(repr(getattr(d, 'name', None)) for d in value)))
+            else:
+                fields.append(key + '=' + self(value))
+        text = f'S:{type(step).__qualname__}{{' + ';'.join(fields) + '}'
+        self.steps[id(step)] = text
+        return text
+
+
+def fixture_pairs(helpers_source, fixtures):
+    """load_sql_fixture_pairs of the given tests/helpers.py, reading fixture texts from memory."""
+    import io
+    ns = {'__name__': 'tests.helpers', '__file__': '/__blast__/tests/helpers.py'}
+    exec(compile(helpers_source, ns['__file__'], 'exec', dont_inherit=True), ns)
+
+    def fake_open(path, *args, **kwargs):
+        rel = os.path.relpath(os.fspath(path), '/__blast__')
+        return io.StringIO(fixtures[rel])
+
+    ns['open'] = fake_open
+    load = ns['load_sql_fixture_pairs']
+    tpcds = list(load(TPCDS_FIXTURE[len('tests/fixtures/'):]))
+    tpch = list(load(TPCH_FIXTURE[len('tests/fixtures/'):]))
+    return ns, tpcds, tpch
+
+
+class Differs(Exception):
+    """A recomputed step result is not the pinned one."""
+
+
+def run_checks(request, codes, baseline=None):
+    """Step results of the TPC tests for the request's sources.
+
+    request['checks']: {'tpcds': {phase: queries}, 'tpch_opt': {phase: queries}} where
+    queries is a bitmask of query numbers (-1: all) in the order the test makes the
+    calls (see tools/build_proxies.py). Without a baseline (image build) every result is
+    computed and returned as digest lists. With one, each test's answer is True when
+    the requested results equal the pinned ones, else False, stopping at the first
+    difference. Inputs the requested steps need are recomputed without comparing. A
+    step that raises answers False: the test would error. Fixture inputs are always
+    compared.
+    """
+    import pickle
+    overrides = request.get('overrides', {})
+    finder = Finder(dict(overrides), codes, set(overrides), set(overrides) | set(codes))
+    sys.meta_path.insert(0, finder)
+    sys.setrecursionlimit(max(sys.getrecursionlimit(), 10000))
+    checks = request.get('checks', {})
+    out = {}
+    try:
+        ns, tpcds, tpch = fixture_pairs(request['helpers'], request['fixtures'])
+    except BaseException as error:  # noqa: BLE001 - setUpClass would fail
+        return {'ok': True, 'checks': {name: False for name in checks}, 'error': repr(error)[:300]}
+    inputs = {
+        'tpcds': _hash(repr([(meta, sql) for meta, sql, _ in tpcds])),
+        'tpch_opt': _hash(repr([(sql, expected) for _, sql, expected in tpch])),
+    }
+    dumper = None
+
+    def setup():
+        nonlocal dumper
+        if dumper is None:
+            import sqlglot  # noqa: F401
+            from sqlglot import planner
+            dumper = Dumper(sys.modules['sqlglot.expressions.core'].Expr, planner.Step)
+        return dumper
+
+    for name in ('tpcds', 'tpch_opt'):
+        if name not in checks:
+            continue
+        wanted = {phase: int(mask) for phase, mask in checks[name].items() if int(mask)}
+        pinned = baseline.get(name) if baseline is not None else None
+        results = {}
+
+        def chosen(phase, n):
+            return baseline is None or (wanted.get(phase, 0) >> n) & 1 == 1
+
+        def record(phase, n, text):
+            digest = _hash(text)
+            if pinned is None:
+                results.setdefault(phase, []).append(digest)
+                return
+            expected = pinned.get(phase) or []
+            if n >= len(expected) or expected[n] != digest:
+                raise Differs(f'{phase} #{n}')
+
+        try:
+            if pinned is not None and pinned.get('inputs') != inputs[name]:
+                raise Differs('inputs')
+            if wanted or baseline is None:
+                d = setup()
+                from sqlglot import parse_one, transpile
+            if name == 'tpch_opt':
+                for n, (_, sql, optimized) in enumerate(tpch):
+                    if chosen('transpile', 2 * n):
+                        record('transpile', 2 * n, transpile(sql, write='duckdb')[0])
+                    if chosen('transpile', 2 * n + 1):
+                        record('transpile', 2 * n + 1, transpile(optimized, write='duckdb')[0])
+            elif wanted or baseline is None:
+                executed = [n for n, (meta, _, _) in enumerate(tpcds) if meta.get('execute')]
+                for j, n in enumerate(executed):
+                    if chosen('transpile', j):
+                        record('transpile', j, transpile(tpcds[n][1], write='duckdb')[0])
+                # Executed queries whose optimize or plan step is wanted, and the parses they need.
+                planned = [j for j in range(len(executed)) if chosen('optimize', j) or chosen('plan', j)]
+                needed = {executed[j] for j in planned}
+                parsed = {}
+                for n, (meta, sql, _) in enumerate(tpcds):
+                    if n in needed or chosen('parse', n):
+                        expression, sent = pickle.loads(pickle.dumps((parse_one(sql), meta)))
+                        parsed[n] = (sent, expression)
+                        if chosen('parse', n):
+                            record('parse', n, d(expression))
+                if planned:
+                    executor = importlib.import_module('sqlglot.executor')
+                    schema_dict = pickle.loads(pickle.dumps(ns['TPCDS_SCHEMA']))
+                    for j in planned:
+                        sent, expression = parsed[executed[j]]
+                        schema = executor.ensure_schema(schema_dict, dialect=None)
+                        optimized = executor.optimize(expression, schema, leave_tables_isolated=True, dialect=None)
+                        text = optimized.sql(pretty=True)
+                        if chosen('optimize', j):
+                            d.steps = {}
+                            record('optimize', j, d(optimized) + '\n' + text)
+                        if chosen('plan', j):
+                            d.steps = {}
+                            record('plan', j, d(executor.Plan(optimized)))
+            if baseline is None:
+                results['inputs'] = inputs[name]
+                out[name] = results
+            else:
+                out[name] = True
+        except Differs as reason:
+            out[name] = False
+            out[name + '_reason'] = str(reason)
+        except BaseException as error:  # noqa: BLE001
+            out[name] = False if baseline is not None else None
+            out[name + '_reason'] = repr(error)[:300]
+    return {'ok': True, 'checks': out}
+
+
 def serve():
     """Answer one request per input line, each in a fresh fork of this process.
 
@@ -397,6 +663,13 @@ def serve():
     """
     config = json.loads(sys.stdin.readline())
     codes = load_codes(config['cache'])
+    checks_baseline = None
+    if config.get('checks'):
+        try:
+            with open(config['checks']) as f:
+                checks_baseline = json.load(f)
+        except (OSError, ValueError):
+            checks_baseline = None
     with open(config['baseline']) as f:
         base = json.load(f)
     # Standard modules sqlglot imports, loaded before forking so each fork reuses them.
@@ -419,7 +692,17 @@ def serve():
         if pid == 0:
             os.close(read)
             try:
-                result = compute(request, codes, base)
+                # Patched code can loop forever; CPU time is charged, so cap it (the
+                # child then dies and the selector keeps what it could not judge).
+                limit = int(request.get('cpu_limit') or 60)
+                resource.setrlimit(resource.RLIMIT_CPU, (limit, limit + 1))
+            except (ValueError, OSError):
+                pass
+            try:
+                if 'checks' in request:
+                    result = run_checks(request, codes, checks_baseline) if checks_baseline else {'ok': False, 'error': 'no check baseline'}
+                else:
+                    result = compute(request, codes, base)
             except BaseException as error:  # noqa: BLE001
                 result = {'ok': False, 'error': repr(error)}
             with os.fdopen(write, 'w') as out:
