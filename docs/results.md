@@ -53,6 +53,51 @@ Expensive tests are worth their cost when coverage selects them: TPC-DS executio
 (21.5 s) failed on 4 of the 21 commits that selected it, far above the roughly 7%
 at which leaving it out would pay off against a 300 s miss.
 
+## v3: TPC differential checks (November 22, 2026)
+
+Measured on Linux AMD64 (a 4-core cloud container) with Python 3.13. The sample
+(`sample/`, the official catalog with recorded durations) was not available there,
+so a catalog was rebuilt by timing the pinned suite once with pytest
+(`SKIP_INTEGRATION=0`, 1,620 tests, 100.2 s in total). Test numbers are the map's
+test order, 0-based; this was confirmed against failing tests of the validation
+sets. That machine runs the suite at about the labeling machine's speed
+(`test_execute_tpcds` 21.06 s vs 21.45 s recorded), and the previous version
+reproduces the earlier validation results closely (mutants-1 730.7 s vs 745.2 s),
+so the numbers below are comparable but not identical to the official ones.
+
+| Set | Commits | v2 simulated | v3 simulated | Oracle | Misses |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| mutants-1 (sample-like) | 135 | 730.7 | **540.8** | 289.0 | 0 |
+| mutants-2-extended | 120 | 849.6 | **702.7** | 266.9 | 0 |
+| swaps | 109 | 211.2 | **160.2** | 6.4 | 0 |
+
+All nine commits whose real outcome breaks `test_execute_tpcds` keep it (the
+recomputed step results differ: pickling through `serde`, optimizer helpers,
+planner, import-time `alias_`...). The checks also keep it, conservatively, on a few
+commits where results differ but the test still passes (e.g. a simplify change that
+alters optimized trees, a duckdb generator change that alters the transpiled SQL).
+
+Selector CPU (user+system including children, same machine):
+
+| Set | v2 (before) | v3 | of which checks | fingerprints |
+| --- | ---: | ---: | ---: | ---: |
+| mutants-1 | 13.1 s | 23.2 s | 11.3 s (17 checks) | 7.0 s (18) |
+| mutants-2-extended | 20.5 s | 47.3 s | 26.0 s (14) | 14.4 s (38) |
+| swaps | 5.8 s | 12.8 s | 7.8 s (5) | 0.4 s (1) |
+
+The version scored on the board (`2594d55`, 11.5 s CPU on the 40 practice
+commits) uses 22.6 s on mutants-1 on this machine: the scorer's CPU is about
+1.7x this machine for this workload, so v3 should spend roughly 11-12 s on a
+40-commit practice-like set, about what the board measured for v2, while
+simulated seconds on sample-like changes drop by about a quarter.
+
+**Container check.** `docker build` + `docker run` with the scorer's flags
+(`--network none --cpus 2 --memory 4096m --read-only --tmpfs /tmp:size=64m
+--user 65534:65534 --pids-limit 256`) on the 135 mutants-1 patches: the build-time
+`--prepare` succeeds (baseline state, compiled modules and TPC step results),
+output is identical to the local run for all 135 commits, peak memory 222 MB, 39 s
+wall.
+
 ## Map
 
 Built from unmodified sources with `tools/build_map.py`: 1,620 tests and 25,440

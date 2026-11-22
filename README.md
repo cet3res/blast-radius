@@ -27,7 +27,8 @@ Simulated CI seconds, lower is better: busiest worker seconds + 2 s per worker +
 
 - v0: starter selector, runs every test on 3 workers (1210.5 s on the 30 sample commits)
 - v1: function-level coverage map (556.0 s)
-- v2: syntax-tree diff, statement-level coverage, import-state fingerprints, operand-type profile: **115.6 s, 0 misses** on the sample; 0 misses on 364 synthetic changes with real test outcomes (see `docs/results.md`)
+- v2: syntax-tree diff, statement-level coverage, import-state fingerprints, operand-type profile: **115.6 s, 0 misses** on the sample; 0 misses on 364 synthetic changes with real test outcomes (see `docs/results.md`). Practice board: 186.3 s (174.8 simulated + 11.5 CPU)
+- v3: differential checks for the TPC-DS execution test (21 s) and `test_optimized_tpch`: on the validation sets with real outcomes, simulated seconds drop 26% (mutants-1 730.7 -> 540.8 s), 0 misses (see `docs/results.md`)
 
 ## How it works
 
@@ -70,6 +71,38 @@ are the change:
   everything; a change to what `import sqlglot` loads also selects the test that
   imports sqlglot in a subprocess.
 
+### Expensive TPC tests: differential checks
+
+`test_execute_tpcds` takes 21 s and runs most of the optimizer, so coverage selects
+it for many edits that do not break it; on the validation sets it caused about 75%
+of all cost above the oracle. The test depends on sqlglot only through a few
+steps whose results are cheap to recompute, plus a run phase that is not:
+
+| Step | What the test does with the result |
+| --- | --- |
+| transpile | `transpile(sql, write="duckdb")`, run by duckdb as the reference |
+| parse | `parse_one(sql)`, pickled to the pool worker |
+| optimize | `optimize(...)` and `.sql(pretty=True)` inside `execute()` |
+| plan | `Plan(optimized)` |
+| run | CSV loading, `find_tables`, the Python executor, frame comparison |
+
+`tools/build_proxies.py` records, on the pinned source, the lines each step runs
+for each query (caches reset before each query, so cold paths are included) and the
+lines of the run phase. For a selected TPC test the selector keeps it when the edit
+reaches a run-phase line, a line the test runs that no recorded step runs, writes
+long-lived state, changes import-time state that a run-phase line names (or any
+method), edits its test module or helpers, or changes a data file it reads.
+Otherwise the fork child recomputes only the touched steps of only the touched
+queries with the patched sources (for import-time data changes: the queries whose
+step lines name a changed attribute) and compares a structural dump of every
+result (all expression slots and args in order, parent links, plans step by step)
+with the same dump computed while the image was built. Equal results mean the run
+phase sees identical inputs and code, so the test is dropped; any difference or
+exception keeps it. `test_optimized_tpch` (3.7 s) depends on sqlglot only through
+its duckdb transpiles and is handled the same way. A TPC fixture edit that leaves a
+test's inputs unchanged (for example only expected optimizer output) drops it with
+no recomputation. All nine real TPC-DS failures in the validation sets are kept.
+
 ### The dependency map
 
 `tools/build_map.py` runs the 1,620 catalog tests once under coverage with
@@ -83,7 +116,9 @@ are the change:
 - classes each test instantiated (all sqlglot `__init__`s are wrapped), class
   ancestry, and each dialect's tokenizer/parser/generator classes;
 - files and directories each test opened or listed, and subprocesses it started;
-- statement spans of every source file, used to expand a reference to its statement.
+- statement spans of every source file, used to expand a reference to its statement;
+- per-step, per-query lines of the two TPC tests and the TPC fixtures
+  (`tools/build_proxies.py`, see above).
 
 Per-process caches that would hide work from later tests are reset before every
 test: the generator dispatch cache, unittest `cache` dicts, the dialect registry,
