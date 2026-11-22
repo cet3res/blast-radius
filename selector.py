@@ -26,6 +26,7 @@ import bisect
 import copy
 import difflib
 import gzip
+import io
 import json
 import marshal
 import os
@@ -977,7 +978,7 @@ class DependencyMap:
                 tests.update(self.sets[sid])
         return tests
 
-    def agreement(self, path):
+    def agreement(self, path, guarded_swap=None):
         """agree(line, col) for comparisons in `path`, from the operand-type profile."""
         sites = self.data.get('compare', {}).get(path)
         types = self.data.get('compare_types')
@@ -991,6 +992,8 @@ class DependencyMap:
             if name_a == none or name_b == none:
                 # NoneType and builtin or identity equality: unequal to None unless identical.
                 other = (name_b, kind_b) if name_a == none else (name_a, kind_a)
+                if other[1] == 'expression_type_guard':
+                    return guarded_swap is not None and guarded_swap()
                 return other[0] == none or other[1] in ('identity', 'builtin')
             if kind_a == 'identity' and kind_b == 'identity':
                 return True
@@ -1489,6 +1492,7 @@ class Selector:
     def _select(self, patch_text, explain):
         m = self.m
         files = parse_patch(patch_text)
+        self.single_file = len(files) == 1
         tests: set[int] = set()
         import_time_sources = {}
         new_modules = set()
@@ -1501,6 +1505,8 @@ class Selector:
             and not f.binary and not f.special and f.new in m.sources for f in files)
         # What the differential checks need: patched sqlglot sources, data files (new text or None).
         patched, data = {}, {}
+        fixtures_only = all(f.old == f.new and f.old in m.data.get('sql_fixtures', {})
+                            and f.hunks and not f.special and not f.binary for f in files)
         for f in files:
             if f.special:
                 raise Everything('rename or copy')
@@ -1557,6 +1563,10 @@ class Selector:
                 found = self.read_tests(path)
                 tests |= found
                 data[path] = None
+                continue
+            if fixtures_only and self.equivalent_fixture(path, f.hunks):
+                if explain is not None:
+                    explain.append(f'{path}: identical fixture records')
                 continue
             data[path] = self.patched_fixture(path, f.hunks)
             tests |= self.read_tests(path)
@@ -1630,6 +1640,39 @@ class Selector:
         return chosen - passed
 
     # -- differential checks of the expensive TPC tests
+
+    def equivalent_fixture(self, path, hunks):
+        """Re-run the exact observed fixture loaders. Keep any unknown or malformed input."""
+        entry = self.m.data.get('sql_fixtures', {}).get(path)
+        if not entry:
+            return False
+        loaders, baseline = entry
+        try:
+            patched = apply_hunks(baseline, hunks)
+            if len(patched) > len(baseline) + 100_000:
+                return False
+            ns = self.__dict__.get('_fixture_helpers')
+            if ns is None:
+                ns = {'__name__': 'tests.helpers', '__file__': '/tests/helpers.py'}
+                exec(compile(self.m.sources['tests/helpers.py'], 'tests/helpers.py', 'exec', dont_inherit=True), ns)
+                self._fixture_helpers = ns
+
+            def records(text, loader):
+                ns['open'] = lambda *a, **k: io.StringIO(text)
+                if loader == 'load_sql_fixtures':
+                    return list(ns[loader](path))
+                if loader in ('load_sql_fixture_pairs', 'check_file'):
+                    pairs = list(ns['load_sql_fixture_pairs'](path))
+                    if loader == 'check_file':
+                        # This caller uses the title only to label the subtest when 'only' is unset.
+                        for meta, _, _ in pairs:
+                            meta.pop('title', None)
+                    return pairs
+                raise ValueError('unsupported loader')
+
+            return bool(loaders) and all(records(baseline, mode) == records(patched, mode) for mode in loaders)
+        except Exception:
+            return False
 
     def patched_fixture(self, path, hunks):
         fixtures = (self.m.data.get('proxies') or {}).get('fixtures', {})
@@ -1820,6 +1863,21 @@ class Selector:
         old_tree = self.m.tree(path)
         _, import_lines = self.m.line_sets(path)
         texts = (old_text.split('\n'), new_text.split('\n'))
+        # The refined expression proof uses the pinned comparison methods. A second
+        # edit might change those methods or the operands reaching the comparison.
+        guarded = None
+        def guarded_swap():
+            nonlocal guarded
+            if guarded is None:
+                sites = []
+                guarded = (self.single_file and swap_sites(old_tree, new_tree, sites)
+                           and len(sites) == 1 and not any(
+                               isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef))
+                               and fn.name in ('__eq__', '__ne__', '__getattribute__')
+                               and fn.lineno <= sites[0][0] <= fn.end_lineno
+                               for fn in ast.walk(old_tree)))
+            return guarded
+
         def has_function(key):  # the profile is loaded only when an edit could use it
             values = self.m.value_map()
             return values is not None and f'{path}:{key}' in values['defaults']
@@ -1829,7 +1887,7 @@ class Selector:
             entry = values['boolops'].get(f'{path}:{line}:{col}') if values is not None else None
             return entry is not None and all(len(v) == leaves for v in entry['vectors'])
         differ = Differ(import_lines, self.m.import_lambdas(path), texts, edited,
-                        module_level_names(old_tree) | module_level_names(new_tree), self.m.agreement(path),
+                        module_level_names(old_tree) | module_level_names(new_tree), self.m.agreement(path, guarded_swap),
                         postpones_annotations(old_tree) and postpones_annotations(new_tree), has_function, has_bool_site)
         differ.block(old_tree.body, new_tree.body, old_tree, 'module')
         self.py_info[path] = (set(differ.lines) | differ.profiled_lines, differ.import_time, set(differ.shared))
@@ -2032,7 +2090,8 @@ def schedule(durations: dict[int, int]) -> list[list[int]]:
         if best_cost is not None and bound >= best_cost:
             continue
         workers, loads = lpt(items, k)
-        workers, loads = improve(workers, loads, durations)
+        if max(loads) + WORKER_MS * k > bound:
+            workers, loads = improve(workers, loads, durations)
         cost = max(loads) + WORKER_MS * len([w for w in workers if w])
         if best_cost is None or cost < best_cost:
             best, best_cost = [w for w in workers if w], cost

@@ -31,11 +31,28 @@ SOURCE = os.environ["BLAST_SOURCE"]
 SITES = []          # index -> (path, line, col)
 SEEN = {}           # index -> set of (id(type a), id(type b))
 TYPES = {}          # id -> type
+# A comparison against None can use Expression's exact-type guard when both
+# rich comparison methods are the pinned implementations, including the
+# instance lookup used by Expression.__ne__. Keep only type information.
+EXPR_NONE_OK = set()
+EXPR_NONE_UNSAFE = set()
 OPS = (ast.Is, ast.IsNot, ast.Eq, ast.NotEq)
 
 
 def __blast_cmp__(site, a, b, op):
     ta, tb = type(a), type(b)
+    if (a is None) != (b is None):
+        obj = b if a is None else a
+        cls = type(obj)
+        if cls.__module__.startswith("sqlglot.expressions."):
+            core = sys.modules.get("sqlglot.expressions.core")
+            base = getattr(core, "Expression", None)
+            if (base is not None and cls.__eq__ is base.__eq__ and cls.__ne__ is base.__ne__
+                    and cls.__getattribute__ is object.__getattribute__
+                    and getattr(obj.__eq__, "__func__", None) is base.__eq__):
+                EXPR_NONE_OK.add(id(cls))
+            else:
+                EXPR_NONE_UNSAFE.add(id(cls))
     TYPES[id(ta)] = ta
     TYPES[id(tb)] = tb
     seen = SEEN.get(site)
@@ -144,6 +161,8 @@ def describe(t):
             kinds.append("custom")
     # Equality and inequality must both be standard for a swap of either to be judged.
     kind = "custom" if "custom" in kinds else ("builtin" if "builtin" in kinds else "identity")
+    if id(t) in EXPR_NONE_OK and id(t) not in EXPR_NONE_UNSAFE:
+        kind = "expression_type_guard"
     unique = False
     if isinstance(t, type) and issubclass(t, enum.Enum):
         values = [m._value_ for m in t.__members__.values()]
@@ -195,7 +214,7 @@ def main():
         command += ['-n', str(args.workers)]
     done = subprocess.run(command, cwd=source, env=env, capture_output=True, text=True)
     print(done.stdout[-1500:], file=sys.stderr)
-    if 'passed' not in done.stdout:
+    if done.returncode != 0 or 'passed' not in done.stdout:
         raise SystemExit('profiling run failed')
 
     types: dict[str, list] = {}

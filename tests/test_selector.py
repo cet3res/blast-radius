@@ -3,7 +3,7 @@ from pathlib import Path
 import unittest
 
 from selector import (
-    Differ, Everything, SpanIndex, apply_hunks, bindings, bool_outcome, bool_regroups, check_compiles,
+    DependencyMap, Selector, Differ, Everything, SpanIndex, apply_hunks, bindings, bool_outcome, bool_regroups, check_compiles,
     default_edits, edited_lines, import_only_command, pair_statements, parse_patch, schedule, swap_sites,
     touched_new_lines,
 )
@@ -38,6 +38,38 @@ def locate_with_text(old, new, import_lines=()):
     differ = Differ(set(import_lines), set(), (old.split('\n'), new.split('\n')), (removed, added))
     differ.block(ast.parse(old).body, ast.parse(new).body, ast.parse(old), 'module')
     return differ.lines, differ.import_time
+
+
+class EquivalenceTests(unittest.TestCase):
+    def test_guarded_expression_against_none(self):
+        mapping = DependencyMap.__new__(DependencyMap)
+        mapping.data = {
+            'compare': {'x.py': {'1:0': [[0, 1], [1, 0]], '2:0': [[1, 1]]}},
+            'compare_types': [('builtins:NoneType', 'builtin', False),
+                              ('expressions:X', 'expression_type_guard', False)],
+        }
+        self.assertFalse(mapping.agreement('x.py')(1, 0))
+        self.assertFalse(mapping.agreement('x.py', lambda: False)(1, 0))
+        agree = mapping.agreement('x.py', lambda: True)
+        self.assertTrue(agree(1, 0))
+        self.assertFalse(agree(2, 0))
+        self.assertFalse(agree(3, 0))
+
+    def test_optimizer_fixture_metadata(self):
+        mapping = DependencyMap(Path(__file__).resolve().parents[1] / 'dependencies.json.gz', [])
+        selector = Selector(mapping)
+        path = 'tests/fixtures/example.sql'
+        original = '#title: first'
+        loaders = ['check_file']
+        mapping.data['sql_fixtures'][path] = [loaders, original + '\nSELECT 1; SELECT 2;\n']
+        def equivalent(line):
+            hunks = parse_patch(patch_for(path, 1, [original], [line]))[0].hunks
+            return selector.equivalent_fixture(path, hunks)
+        self.assertTrue(equivalent('#title: renamed'))
+        self.assertFalse(equivalent('#dialect: spark'))
+        self.assertFalse(equivalent('#invalid'))
+        loaders.append('load_sql_fixture_pairs')
+        self.assertFalse(equivalent('#title: renamed'))
 
 
 class PatchTests(unittest.TestCase):

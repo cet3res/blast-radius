@@ -26,3 +26,4 @@
 - [x] Annotation-only, default-value and and/or (regroup, negated leaves) edits judged by per-test profiles (tools/build_values.py).
 - [x] Run cheap selections in the container with a build-time cost model (plan step 4): sample 106.9 -> 97.1 s, 0 misses.
 - [ ] Per-case verification of optimizer fixture tests (`check_file`: test_tpcds, test_qualify_columns...) (plan step 5).
+- [x] Narrow isolated identity/equality swaps against None and equivalent SQL fixture edits. All 521 labeled patches retained all failures. Swap validation fell from 151.7 to 66.6 simulated seconds and mutants-1 from 438.4 to 424.7. The official sample stayed at 96.817 seconds.

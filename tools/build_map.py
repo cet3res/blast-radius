@@ -172,6 +172,8 @@ def main():
     listings: dict[str, set[str]] = {}
     subprocesses: dict[str, list] = {}
 
+    fixture_loaders: dict[str, set[str]] = {}
+
     def audit(event, args):
         ctx = context[0]
         if event in ('subprocess.Popen', 'os.system', 'os.posix_spawn', 'os.exec'):
@@ -200,6 +202,19 @@ def main():
                 if (relative.endswith(('.py', '.pyc')) and relative.startswith(('sqlglot/', 'tests/'))
                         and not relative.startswith('tests/fixtures/')):
                     return  # imports of measured code; coverage covers it
+                if relative.startswith('tests/fixtures/') and relative.endswith('.sql'):
+                    caller = sys._getframe(1)
+                    name = caller.f_code.co_name
+                    if caller.f_code.co_filename != str(source / 'tests/helpers.py') or name not in (
+                        'load_sql_fixture_pairs', 'load_sql_fixtures',
+                    ):
+                        name = 'raw'
+                    elif name == 'load_sql_fixture_pairs':
+                        consumer = caller.f_back
+                        if (consumer and consumer.f_code.co_filename == str(source / 'tests/test_optimizer.py')
+                                and consumer.f_code.co_name == 'check_file' and consumer.f_locals.get('only') is None):
+                            name = 'check_file'
+                    fixture_loaders.setdefault(relative, set()).add(name)
                 reads.setdefault(relative, set()).add(ctx)
             else:
                 listings.setdefault(relative, set()).add(ctx)
@@ -538,6 +553,11 @@ def main():
         'unmeasured': unmeasured,
         'subprocess': {str(k): v for k, v in sorted(spawned.items())},
         'sets': sets,
+        'sql_fixtures': {
+            path: [sorted(loaders), (source / path).read_text(encoding='utf-8')]
+            for path, loaders in sorted(fixture_loaders.items())
+            if 'raw' not in loaders
+        },
         'files': files,
         'code_at_import': {k: sorted(v) for k, v in sorted(code_at_import.items())},
         'reads': {k: set_id(frozenset(charge(v))) for k, v in sorted(reads.items())},
