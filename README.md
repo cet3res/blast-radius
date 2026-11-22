@@ -28,7 +28,8 @@ Simulated CI seconds, lower is better: busiest worker seconds + 2 s per worker +
 - v0: starter selector, runs every test on 3 workers (1210.5 s on the 30 sample commits)
 - v1: function-level coverage map (556.0 s)
 - v2: syntax-tree diff, statement-level coverage, import-state fingerprints, operand-type profile: **115.6 s, 0 misses** on the sample; 0 misses on 364 synthetic changes with real test outcomes (see `docs/results.md`). Practice board: 186.3 s (174.8 simulated + 11.5 CPU)
-- v3: differential checks for the TPC-DS execution test (21 s) and `test_optimized_tpch`: on the validation sets with real outcomes, simulated seconds drop 26% (mutants-1 730.7 -> 540.8 s), 0 misses (see `docs/results.md`)
+- v2 + CPU cut (`b39c886`): practice board 181.0 s (174.8 simulated + 6.2 CPU)
+- v3: differential checks for the TPC-DS execution test (21 s) and `test_optimized_tpch`: on the validation sets with real outcomes, simulated seconds drop 26% (mutants-1 730.7 -> 540.8 s), 0 misses (see `docs/results.md`). Practice board (`7c8bcbf`): **163.1 s** (154.8 simulated + 8.3 CPU, 0 misses)
 
 ## How it works
 

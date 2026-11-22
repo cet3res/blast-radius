@@ -25,7 +25,8 @@ entries are read by the organizers.
 | Starter (all tests, 3 workers) | — | 1210.5 s | 1614.1 s |
 | Coverage selector v2 + type profile | `2594d55` | 115.6 s, 0 misses | **186.3 s** = 174.774 simulated + ~11.5 CPU, 0 misses in all 3 runs |
 | CPU cut (same selections) | `0919b56` | 115.6 s, 0 misses | not submitted when this was written; expected ~180 |
-| TPC differential checks | this branch | not measured (no sample here) | not submitted yet; see estimate below |
+| CPU cut, submitted | `b39c886` | 115.6 s, 0 misses | 181.0 s = 174.774 simulated + 6.2 CPU |
+| TPC differential checks | `7c8bcbf` | not measured (no sample here) | **163.1 s** = 154.754 simulated + 8.3 CPU, 0 misses |
 
 **v3 (TPC differential checks).** On the validation sets with real outcomes and a
 locally timed catalog: mutants-1 730.7 -> 540.8 s, mutants-2 849.6 -> 702.7 s,

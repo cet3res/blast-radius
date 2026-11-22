@@ -112,6 +112,19 @@ fingerprint): a patch that makes the optimizer loop forever (tested with
 `while True: pass` in `qualify_columns`) costs 25 s and keeps the test. After 150 s
 of wall time no more checks are made, after 210 s no more patched imports.
 
+## Practice board
+
+| Commit | Score | Simulated | CPU | Misses |
+| --- | ---: | ---: | ---: | ---: |
+| `2594d55` (v2) | 186.3 s | 174.774 s | 11.5 s | 0 |
+| `b39c886` (v2 + CPU cut) | 181.0 s | 174.774 s | 6.2 s | 0 |
+| `7c8bcbf` (v3, TPC checks) | **163.1 s** | 154.754 s | 8.3 s | 0 |
+
+The checks cost about 2.1 s of CPU on the 40 practice commits and saved 20.0
+simulated seconds. On the validation sets nothing as large is left: after TPC-DS,
+no single test adds more than about 4 s per 40 commits of excess, and on mutants-1
+half of the remaining excess is on commits whose real outcome breaks nothing.
+
 ## Map
 
 Built from unmodified sources with `tools/build_map.py`: 1,620 tests and 25,440

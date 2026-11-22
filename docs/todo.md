@@ -19,5 +19,5 @@
 - [ ] Submit `0919b56` (CPU cut) and record the board result in `docs/results.md`.
 - [ ] Class-keyed dict narrowing for import-time dict/set changes (estimated 5-9 s on ~40 commits).
 - [x] Differential checks for `test_execute_tpcds` and `test_optimized_tpch` (validation: -26% simulated on sample-like changes, 0 misses).
-- [ ] Submit this branch and record the board result in `docs/results.md`.
+- [x] Submit this branch and record the board result in `docs/results.md` (163.1 s).
 - [ ] Run only the TPC-DS queries whose steps differ (see HANDOFF next steps).
