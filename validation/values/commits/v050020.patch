@@ -1,0 +1,13 @@
+diff --git a/sqlglot/schema.py b/sqlglot/schema.py
+index 0000000..1111111 100644
+--- a/sqlglot/schema.py
++++ b/sqlglot/schema.py
+@@ -650,7 +650,7 @@
+     def _normalize_name(
+         self,
+         name: str | exp.Identifier,
+-        dialect: DialectType = None,
++        dialect: DialectType = "",
+         is_table: bool = False,
+         normalize: bool | None = None,
+     ) -> str:

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -3317,7 +3317,7 @@
+         serde = f" SERDE {serde}" if serde else ""
+         return f"LOAD DATA{local}{inpath}{overwrite}{this}{partition}{input_format}{serde}"
+ 
+-    def null_sql(self, *_) -> str:
++    def null_sql(self, *_) -> str | None:
+         return "NULL"
+ 
+     def boolean_sql(self, expression: exp.Boolean) -> str:

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/snowflake.py b/sqlglot/generators/snowflake.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/snowflake.py
++++ b/sqlglot/generators/snowflake.py
+@@ -754,7 +754,7 @@
+ 
+         return rename_func("TIMESTAMP_FROM_PARTS")(self, expression)
+ 
+-    def cast_sql(self, expression: exp.Cast, safe_prefix: str | None = None) -> str:
++    def cast_sql(self, expression: exp.Cast, safe_prefix: str | None = 0) -> str:
+         if expression.is_type(exp.DType.GEOGRAPHY):
+             return self.func("TO_GEOGRAPHY", expression.this)
+         if expression.is_type(exp.DType.GEOMETRY):

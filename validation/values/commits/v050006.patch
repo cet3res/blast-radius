@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -9307,7 +9307,7 @@
+             return self._prev
+         return None
+ 
+-    def _parse_var_or_string(self, upper: bool = False) -> exp.Expr | None:
++    def _parse_var_or_string(self, upper: bool = True) -> exp.Expr | None:
+         return self._parse_string() or self._parse_var(any_token=True, upper=upper)
+ 
+     def _parse_primary_or_var(self) -> exp.Expr | None:

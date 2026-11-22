@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/qualify_columns.py b/sqlglot/optimizer/qualify_columns.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/qualify_columns.py
++++ b/sqlglot/optimizer/qualify_columns.py
+@@ -1537,7 +1537,7 @@
+         expression.set("expressions", new_selections)
+ 
+ 
+-def quote_identifiers(expression: E, dialect: DialectType = None, identify: bool = True) -> E:
++def quote_identifiers(expression: E, dialect: DialectType = None, identify: bool = False) -> E:
+     """Makes sure all identifiers that need to be quoted are quoted."""
+     dialect = Dialect.get_or_raise(dialect)
+ 

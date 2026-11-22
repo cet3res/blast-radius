@@ -1,0 +1,13 @@
+diff --git a/sqlglot/transforms.py b/sqlglot/transforms.py
+index 0000000..1111111 100644
+--- a/sqlglot/transforms.py
++++ b/sqlglot/transforms.py
+@@ -658,7 +658,7 @@
+     if (
+         isinstance(expression, (exp.Cast, exp.TryCast))
+         and expression.name.lower() == "epoch"
+-        and expression.to.this in exp.DataType.TEMPORAL_TYPES
++        or expression.to.this in exp.DataType.TEMPORAL_TYPES
+     ):
+         expression.this.replace(exp.Literal.string("1970-01-01 00:00:00"))
+ 

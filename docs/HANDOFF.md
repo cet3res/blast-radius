@@ -27,7 +27,8 @@ entries are read by the organizers.
 | CPU cut (same selections) | `0919b56` | 115.6 s, 0 misses | not submitted when this was written; expected ~180 |
 | CPU cut, submitted | `b39c886` | 115.6 s, 0 misses | 181.0 s = 174.774 simulated + 6.2 CPU |
 | TPC differential checks | `7c8bcbf` | not measured (no sample here) | **163.1 s** = 154.754 simulated + 8.3 CPU, 0 misses |
-| Key-level dict/set narrowing, test-mode children | this branch | not measured | not submitted yet (mutants-1 -11.5% vs v3) |
+| Key-level dict/set narrowing, test-mode children | `c93caa3` | not measured | **145.9 s** = 139.002 simulated + 6.9 CPU, 0 misses |
+| Default/annotation/boolean profiles | this branch | not measured | not submitted yet (mutants-1 -7.2% vs v4) |
 
 **v3 (TPC differential checks).** On the validation sets with real outcomes and a
 locally timed catalog: mutants-1 730.7 -> 540.8 s, mutants-2 849.6 -> 702.7 s,

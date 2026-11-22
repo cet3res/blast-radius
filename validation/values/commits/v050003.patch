@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/snowflake.py b/sqlglot/parsers/snowflake.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/snowflake.py
++++ b/sqlglot/parsers/snowflake.py
+@@ -166,7 +166,7 @@
+ 
+ 
+ # https://docs.snowflake.com/en/sql-reference/functions/div0null
+-def _build_if_from_div0null(args: list) -> exp.If:
++def _build_if_from_div0null(args: list) -> exp.If | None:
+     lhs = exp._wrap(seq_get(args, 0), exp.Binary)
+     rhs = exp._wrap(seq_get(args, 1), exp.Binary)
+ 

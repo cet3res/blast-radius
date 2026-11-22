@@ -138,6 +138,27 @@ CPU is about the same as v3 (mutants-1 21.7 s here, 30.8 s in the container),
 since narrowed tables avoid some TPC checks. Container output is identical to the
 local run on mutants-1 and entries.
 
+## v5: default arguments, annotations, boolean operators (November 22, 2026)
+
+Same machine and catalog. `validation/values` is a new set: 64 edits of the three
+kinds (`tools/mutants.py generate --values --seed 5`): a changed default value, a
+changed return annotation, or one `and`/`or` swapped inside a chain; 63 have real
+outcomes (one patch made the catalog run hang past the 30-minute limit).
+
+| Set | Commits | v4 | v5 | Oracle | Misses |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| mutants-1 | 135 | 478.4 | **444.0** | 289.0 | 0 |
+| mutants-2-extended | 120 | 652.8 | 652.8 | 266.9 | 0 |
+| swaps | 109 | 160.2 | 160.2 | 6.4 | 0 |
+| entries | 64 | 359.4 | 359.4 | 157.1 | 0 |
+| values (new) | 63 | 386.7 | **344.8** | 142.9 | 0 |
+
+On mutants-1, annotation-only edits now select nothing (e.g. 162 tests -> 0),
+regrouped or negated boolean leaves select only tests with a changing truth vector,
+and changed defaults select the tests that relied on them (e.g. 239 -> 182 tests).
+CPU went down (mutants-1 19.9 s here, 24.8 s in the container, was 30.8 s) because
+fewer TPC checks are needed; container output identical on mutants-1 and values.
+
 ## Practice board
 
 | Commit | Score | Simulated | CPU | Misses |

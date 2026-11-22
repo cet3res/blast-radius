@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -3263,7 +3263,7 @@
+     def escape_str(
+         self,
+         text: str,
+-        escape_backslash: bool = True,
++        escape_backslash: bool = False,
+         delimiter: str | None = None,
+         escaped_delimiter: str | None = None,
+         is_byte_string: bool = False,

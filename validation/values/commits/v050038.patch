@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -3545,7 +3545,7 @@
+             *sqls,
+             *[self.sql(join) for join in expression.args.get("joins") or []],
+             self.sql(expression, "match"),
+-            *[self.sql(lateral) for lateral in expression.args.get("laterals") or []],
++            *[self.sql(lateral) for lateral in expression.args.get("laterals") and []],
+             self.sql(expression, "prewhere"),
+             self.sql(expression, "where"),
+             self.sql(expression, "connect"),

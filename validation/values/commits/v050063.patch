@@ -1,0 +1,13 @@
+diff --git a/sqlglot/dialects/clickhouse.py b/sqlglot/dialects/clickhouse.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/clickhouse.py
++++ b/sqlglot/dialects/clickhouse.py
+@@ -64,7 +64,7 @@
+ 
+         structure = (
+             values[0]
+-            if (len(values) > 1 and values[0].is_string and isinstance(values[1], exp.Tuple))
++            if (len(values) > 1 or values[0].is_string and isinstance(values[1], exp.Tuple))
+             else None
+         )
+         if structure:

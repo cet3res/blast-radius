@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/clickhouse.py b/sqlglot/generators/clickhouse.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/clickhouse.py
++++ b/sqlglot/generators/clickhouse.py
+@@ -779,7 +779,7 @@
+ 
+         return super().not_sql(expression)
+ 
+-    def values_sql(self, expression: exp.Values, values_as_table: bool = True) -> str:
++    def values_sql(self, expression: exp.Values, values_as_table: bool = False) -> str:
+         # If the VALUES clause contains tuples of expressions, we need to treat it
+         # as a table since Clickhouse will automatically alias it as such.
+         alias = expression.args.get("alias")

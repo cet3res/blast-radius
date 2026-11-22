@@ -44,3 +44,4 @@ map:
 	$(PYTHON) tools/build_profile.py "$(SOURCE)" dependencies.json.gz dependencies.json.gz --python $(PYTHON)
 	$(PYTHON) tools/build_proxies.py "$(SOURCE)" dependencies.json.gz dependencies.json.gz
 	$(PYTHON) tools/build_keys.py "$(SOURCE)" dependencies.json.gz keys.json.gz
+	$(PYTHON) tools/build_values.py "$(SOURCE)" dependencies.json.gz values.json.gz

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -5925,7 +5925,7 @@
+         retention_period: str | None = self.sql(expression, "retention_period")
+         retention_period = f"RETENTION_PERIOD={retention_period}" if retention_period else None
+ 
+-        if filter_col or retention_period:
++        if filter_col and retention_period:
+             on_sql = self.func("ON", filter_col, retention_period)
+ 
+         return f"DATA_DELETION={on_sql}"

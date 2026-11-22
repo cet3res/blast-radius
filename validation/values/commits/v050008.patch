@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/query.py b/sqlglot/expressions/query.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/query.py
++++ b/sqlglot/expressions/query.py
+@@ -307,7 +307,7 @@
+         self: Q,
+         alias: ExpOrStr,
+         as_: ExpOrStr,
+-        recursive: bool | None = None,
++        recursive: bool | None = 0,
+         materialized: bool | None = None,
+         append: bool = True,
+         dialect: DialectType = None,

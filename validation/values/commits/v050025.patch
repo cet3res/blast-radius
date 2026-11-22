@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/dml.py b/sqlglot/expressions/dml.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/dml.py
++++ b/sqlglot/expressions/dml.py
+@@ -38,7 +38,7 @@
+         dialect: DialectType = None,
+         copy: bool = True,
+         **opts: Unpack[ParserNoDialectArgs],
+-    ) -> Self:
++    ) -> Self | None:
+         """
+         Set the RETURNING expression. Not supported by all dialects.
+ 

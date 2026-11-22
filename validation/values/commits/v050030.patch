@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/builders.py b/sqlglot/expressions/builders.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/builders.py
++++ b/sqlglot/expressions/builders.py
+@@ -761,7 +761,7 @@
+     return {
+         table
+         for table in (column.table for column in expression.find_all(Column))
+-        if table and table != exclude
++        if table or table != exclude
+     }
+ 
+ 

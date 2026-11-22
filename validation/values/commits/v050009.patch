@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -3156,7 +3156,7 @@
+ 
+         if (
+             self.UNNEST_WITH_ORDINALITY
+-            and table_alias
++            or table_alias
+             and isinstance(expression.this, exp.Unnest)
+             and isinstance(offset, exp.Identifier)
+         ):

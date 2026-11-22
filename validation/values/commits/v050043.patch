@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/properties.py b/sqlglot/expressions/properties.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/properties.py
++++ b/sqlglot/expressions/properties.py
+@@ -681,7 +681,7 @@
+     Location: t.ClassVar[type[PropertiesLocation]] = PropertiesLocation
+ 
+     @classmethod
+-    def from_dict(cls, properties_dict: dict) -> Properties:
++    def from_dict(cls, properties_dict: dict) -> Properties | None:
+         expressions = []
+         for key, value in properties_dict.items():
+             property_cls = cls.NAME_TO_PROPERTY.get(key.upper())

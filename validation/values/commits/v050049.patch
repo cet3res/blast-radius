@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/dax.py b/sqlglot/parsers/dax.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/dax.py
++++ b/sqlglot/parsers/dax.py
+@@ -38,7 +38,7 @@
+         table = self._parse_table_parts()
+         return exp.select("*").from_(table, copy=False) if table else None
+ 
+-    def _parse_column(self) -> exp.Expr | None:
++    def _parse_column(self) -> exp.Expr | None | None:
+         this = super()._parse_column()
+ 
+         # Combine adjacent identifiers into a column reference: Table[Column]

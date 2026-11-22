@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -6331,7 +6331,7 @@
+     def arraysort_sql(self, expression: exp.ArraySort) -> str:
+         asc = expression.args.get("asc")
+         nulls_first = expression.args.get("nulls_first")
+-        if (asc and asc != exp.true()) or (nulls_first and nulls_first != exp.false()):
++        if (asc and asc != exp.true()) and (nulls_first and nulls_first != exp.false()):
+             self.unsupported("ARRAY_SORT only sorts ascending with NULLs last")
+         return self.func("ARRAY_SORT", expression.this, expression.expression)
+ 

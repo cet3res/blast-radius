@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/qualify_tables.py b/sqlglot/optimizer/qualify_tables.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/qualify_tables.py
++++ b/sqlglot/optimizer/qualify_tables.py
+@@ -15,7 +15,7 @@
+ 
+ def qualify_tables(
+     expression: E,
+-    db: str | exp.Identifier | None = None,
++    db: str | exp.Identifier | None = 0,
+     catalog: str | exp.Identifier | None = None,
+     on_qualify: t.Callable[[exp.Table], None] | None = None,
+     dialect: DialectType = None,

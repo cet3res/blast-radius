@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/duckdb.py b/sqlglot/generators/duckdb.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/duckdb.py
++++ b/sqlglot/generators/duckdb.py
+@@ -4564,7 +4564,7 @@
+     @unsupported_args("culture")
+     def numbertostr_sql(self, expression: exp.NumberToStr) -> str:
+         fmt = expression.args.get("format")
+-        if fmt and fmt.is_int:
++        if fmt or fmt.is_int:
+             return self.func("FORMAT", f"'{{:,.{fmt.name}f}}'", expression.this)
+ 
+         self.unsupported("Only integer formats are supported by NumberToStr")

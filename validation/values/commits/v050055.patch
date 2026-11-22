@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/bigquery.py b/sqlglot/generators/bigquery.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/bigquery.py
++++ b/sqlglot/generators/bigquery.py
+@@ -771,7 +771,7 @@
+             value is None
+             or not 0 <= value <= 1
+             or round(value, 5) != value
+-            or (weight and (not weight.is_number or weight.to_py() != 1))
++            or (weight and (not weight.is_number and weight.to_py() != 1))
+         ):
+             self.unsupported("APPROX_QUANTILE needs a literal quantile and no weight")
+             return self.function_fallback_sql(expression)

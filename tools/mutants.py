@@ -281,6 +281,108 @@ def generate_entries(args):
     (out / 'kinds.json').write_text(json.dumps(kinds, indent=1))
 
 
+def value_mutation(rng, text: str):
+    """A changed default value, a changed annotation, or one `and`/`or` swapped in a chain."""
+    tree = ast.parse(text)
+    lines = text.split('\n')
+    defs, bools = [], []
+
+    def scan(body, in_function):
+        for node in body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                defs.append(node)
+                for sub in ast.walk(node):
+                    if isinstance(sub, ast.BoolOp) and sub is not node:
+                        bools.append(sub)
+            elif isinstance(node, ast.ClassDef):
+                scan(node.body, in_function)
+
+    scan(tree.body, False)
+    for _ in range(30):
+        how = rng.choices(['default', 'annotation', 'boolop'], weights=[35, 15, 50])[0]
+        new_lines = list(lines)
+        if how == 'default':
+            candidates = [(d, v) for d in defs for v in d.args.defaults + [k for k in d.args.kw_defaults if k]
+                          if isinstance(v, ast.Constant) and v.lineno == v.end_lineno]
+            if not candidates:
+                continue
+            _, v = rng.choice(candidates)
+            value = v.value
+            if value is None:
+                replacement = rng.choice(['0', 'False', '""'])
+            elif value is True or value is False:
+                replacement = str(not value)
+            elif isinstance(value, int):
+                replacement = str(value + 1)
+            elif isinstance(value, str):
+                replacement = repr(value + 'X')
+            else:
+                continue
+            line = lines[v.lineno - 1]
+            new_lines[v.lineno - 1] = line[:v.col_offset] + replacement + line[v.end_col_offset:]
+        elif how == 'annotation':
+            candidates = [d.returns for d in defs if d.returns is not None and d.returns.lineno == d.returns.end_lineno]
+            if not candidates:
+                continue
+            r = rng.choice(candidates)
+            line = lines[r.lineno - 1]
+            new_lines[r.lineno - 1] = line[:r.end_col_offset] + ' | None' + line[r.end_col_offset:]
+        else:
+            if not bools:
+                continue
+            b = rng.choice(bools)
+            k = rng.randrange(len(b.values) - 1)
+            left, right = b.values[k], b.values[k + 1]
+            if left.end_lineno != right.lineno:
+                if left.end_lineno + 1 != right.lineno:
+                    continue
+            word, other = ('and', 'or') if isinstance(b.op, ast.And) else ('or', 'and')
+            # the operator sits between the two operands, on either operand's line
+            for lineno, start, stop in ((left.end_lineno, left.end_col_offset, None),
+                                        (right.lineno, 0, right.col_offset)):
+                line = new_lines[lineno - 1]
+                segment = line[start:stop]
+                position = segment.find(f' {word} ') if segment.find(f' {word} ') >= 0 else (
+                    0 if segment.lstrip().startswith(word + ' ') else -1)
+                if position >= 0:
+                    index = start + (position + 1 if segment.find(f' {word} ') >= 0 else len(segment) - len(segment.lstrip()))
+                    new_lines[lineno - 1] = line[:index] + other + line[index + len(word):]
+                    break
+            else:
+                continue
+        new_text = '\n'.join(new_lines)
+        try:
+            ast.parse(new_text)
+        except SyntaxError:
+            continue
+        if new_text != text:
+            return new_text
+    return None
+
+
+def generate_values(args):
+    """Default-value, annotation and and/or edits (validation of the value profiles)."""
+    rng = random.Random(args.seed)
+    source = Path(args.source)
+    out = Path(args.out)
+    (out / 'commits').mkdir(parents=True, exist_ok=True)
+    pys = [p for p in py_files(source) if p.as_posix().split('/sqlglot/', 1)[-1] and '/tests/' not in p.as_posix()]
+    weights = [len(p.read_text().split('\n')) for p in pys]
+    kinds = {}
+    made = 0
+    while made < args.count:
+        path = rng.choices(pys, weights=weights)[0]
+        text = path.read_text()
+        new_text = value_mutation(rng, text)
+        if new_text is None:
+            continue
+        name = f'v{args.seed:02d}{made:04d}'
+        (out / 'commits' / f'{name}.patch').write_text(diff(path.relative_to(source).as_posix(), text, new_text))
+        kinds[name] = 'value'
+        made += 1
+    (out / 'kinds.json').write_text(json.dumps(kinds, indent=1))
+
+
 def diff(rel: str, old: str, new: str) -> str:
     body = ''.join(difflib.unified_diff(
         old.splitlines(keepends=True), new.splitlines(keepends=True), f'a/{rel}', f'b/{rel}', n=3))
@@ -463,6 +565,7 @@ def main():
     g.add_argument('--seed', type=int, default=1)
     g.add_argument('--extended', action='store_true')
     g.add_argument('--entries', action='store_true', help='entry-level changes to dict and set literals')
+    g.add_argument('--values', action='store_true', help='default-value, annotation and and/or edits')
     t = sub.add_parser('truth')
     t.add_argument('source')
     t.add_argument('out')
@@ -472,7 +575,10 @@ def main():
     t.add_argument('--timeout', type=int, default=300)
     args = parser.parse_args()
     if args.cmd == 'generate':
-        generate_entries(args) if args.entries else generate(args)
+        if args.values:
+            generate_values(args)
+        else:
+            generate_entries(args) if args.entries else generate(args)
     else:
         truth(args)
 

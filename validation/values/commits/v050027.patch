@@ -1,0 +1,13 @@
+diff --git a/sqlglot/schema.py b/sqlglot/schema.py
+index 0000000..1111111 100644
+--- a/sqlglot/schema.py
++++ b/sqlglot/schema.py
+@@ -400,7 +400,7 @@
+         """
+         parts = self._normalize_table_parts(table, dialect=dialect, normalize=normalize)
+ 
+-        if match_depth and not self.empty and len(parts) != self.depth():
++        if match_depth and not self.empty or len(parts) != self.depth():
+             table = exp.maybe_parse(
+                 table, into=exp.Table, dialect=dialect or self.dialect, copy=True
+             )

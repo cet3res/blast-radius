@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/teradata.py b/sqlglot/generators/teradata.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/teradata.py
++++ b/sqlglot/generators/teradata.py
+@@ -120,7 +120,7 @@
+         prefix, suffix = ("(", ")") if expression.this else ("", "")
+         return self.func("CURRENT_TIME", expression.this, prefix=prefix, suffix=suffix)
+ 
+-    def currenttimestamp_sql(self, expression: exp.CurrentTimestamp) -> str:
++    def currenttimestamp_sql(self, expression: exp.CurrentTimestamp) -> str | None:
+         prefix, suffix = ("(", ")") if expression.this else ("", "")
+         return self.func("CURRENT_TIMESTAMP", expression.this, prefix=prefix, suffix=suffix)
+ 

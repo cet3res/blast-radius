@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/presto.py b/sqlglot/generators/presto.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/presto.py
++++ b/sqlglot/generators/presto.py
+@@ -578,7 +578,7 @@
+ 
+         return self.func("LOWER", self.func("TO_HEX", self.func("MD5", self.sql(this))))
+ 
+-    def sha2_sql(self, expression: exp.SHA2) -> str:
++    def sha2_sql(self, expression: exp.SHA2) -> str | None:
+         length = expression.text("length") or "256"
+         if length not in ("256", "512"):
+             self.unsupported(f"SHA{length} is not supported in Presto")

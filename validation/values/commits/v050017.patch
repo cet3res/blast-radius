@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parser.py b/sqlglot/parser.py
+index 0000000..1111111 100644
+--- a/sqlglot/parser.py
++++ b/sqlglot/parser.py
+@@ -2243,7 +2243,7 @@
+         self,
+         expression_types: exp.IntoType,
+         raw_tokens: list[Token],
+-        sql: str | None = None,
++        sql: str | None = "",
+     ) -> list[exp.Expr | None]:
+         """
+         Parses a list of tokens into a given Expr type. If a collection of Expr

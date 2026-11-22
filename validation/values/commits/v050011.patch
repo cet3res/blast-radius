@@ -1,0 +1,13 @@
+diff --git a/sqlglot/dialects/dialect.py b/sqlglot/dialects/dialect.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/dialect.py
++++ b/sqlglot/dialects/dialect.py
+@@ -1498,7 +1498,7 @@
+     )
+ 
+ 
+-def no_paren_current_date_sql(self: Generator, expression: exp.CurrentDate) -> str:
++def no_paren_current_date_sql(self: Generator, expression: exp.CurrentDate) -> str | None:
+     zone = self.sql(expression, "this")
+     return f"CURRENT_DATE AT TIME ZONE {zone}" if zone else "CURRENT_DATE"
+ 

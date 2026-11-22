@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/mysql.py b/sqlglot/generators/mysql.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/mysql.py
++++ b/sqlglot/generators/mysql.py
+@@ -680,7 +680,7 @@
+         parent = expression.parent
+         if isinstance(parent, (exp.Neg, exp.BitwiseNot)) or (
+             isinstance(parent, (exp.Mul, exp.Div, exp.IntDiv, exp.Mod))
+-            and parent.expression is expression
++            or parent.expression is expression
+         ):
+             return f"({sql})"
+ 

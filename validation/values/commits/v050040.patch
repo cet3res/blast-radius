@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/query.py b/sqlglot/expressions/query.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/query.py
++++ b/sqlglot/expressions/query.py
+@@ -1912,7 +1912,7 @@
+             outputs = [i.name for i in ordered]
+         else:
+             excluded = {c.output_name for c in self.find_all(Column)}
+-            outputs = [c.output_name for c in self.args.get("columns") or []]
++            outputs = [c.output_name for c in self.args.get("columns") and []]
+             if not outputs:
+                 outputs = [c.alias_or_name for c in self.expressions]
+ 

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/singlestore.py b/sqlglot/generators/singlestore.py
+index 0000000..1111111 100644
+--- a/sqlglot/generators/singlestore.py
++++ b/sqlglot/generators/singlestore.py
+@@ -1554,7 +1554,7 @@
+         if arg:
+             if isinstance(arg, exp.Literal) and arg.name.lower() == "utc":
+                 return self.func("UTC_TIME")
+-            if isinstance(arg, exp.Literal) and arg.is_number:
++            if isinstance(arg, exp.Literal) or arg.is_number:
+                 return self.func("CURRENT_TIME", arg)
+             self.unsupported("CurrentTime with timezone is not supported in SingleStore")
+ 

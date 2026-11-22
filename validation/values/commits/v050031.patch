@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/snowflake.py b/sqlglot/parsers/snowflake.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/snowflake.py
++++ b/sqlglot/parsers/snowflake.py
+@@ -1245,7 +1245,7 @@
+         return super()._parse_id_var(any_token=any_token, tokens=tokens)
+ 
+     def _parse_show_snowflake(
+-        self, this: str, terse: bool = False, iceberg: bool = False
++        self, this: str, terse: bool = False, iceberg: bool = True
+     ) -> exp.Show:
+         scope = None
+         scope_kind = None

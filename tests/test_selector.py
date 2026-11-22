@@ -2,8 +2,9 @@ import ast
 import unittest
 
 from selector import (
-    Differ, Everything, SpanIndex, apply_hunks, bindings, check_compiles, edited_lines, import_only_command,
-    pair_statements, parse_patch, schedule, swap_sites, touched_new_lines,
+    Differ, Everything, SpanIndex, apply_hunks, bindings, bool_outcome, bool_regroups, check_compiles,
+    default_edits, edited_lines, import_only_command, pair_statements, parse_patch, schedule, swap_sites,
+    touched_new_lines,
 )
 
 
@@ -366,6 +367,59 @@ class KeyNarrowingTests(unittest.TestCase):
         self.assertEqual(left, changed)  # digest mismatch
         self.assertEqual(self.selector.key_tests, set())
         self.assertEqual(self.selector.narrow_containers({'m:C': {'D': 'd'}}, {}, None), {'m:C': {'D': 'd'}})
+
+
+class ValueProfileTests(unittest.TestCase):
+    """Default-argument, annotation-only and and/or edits judged by per-test profiles."""
+
+    def fn(self, text):
+        return ast.parse(text).body[0]
+
+    def test_default_edits(self):
+        a = self.fn('def f(x, y=None, *, z=1) -> int: pass')
+        self.assertEqual(default_edits(a, self.fn('def f(x, y=0, *, z=1) -> int: pass'), False), ['y'])
+        self.assertEqual(default_edits(a, self.fn('def f(x, y=None, *, z=2) -> int: pass'), False), ['z'])
+        self.assertEqual(default_edits(a, self.fn('def f(x, y=None, *, z=1) -> str: pass'), True), [])
+        self.assertIsNone(default_edits(a, self.fn('def f(x, y=None, *, z=1) -> str: pass'), False))
+        self.assertIsNone(default_edits(a, self.fn('def f(x, w=None, *, z=1) -> int: pass'), True))
+        self.assertIsNone(default_edits(a, self.fn('def f(x=1, y=None, *, z=1) -> int: pass'), True))
+
+    def test_regroups_and_outcomes(self):
+        old = ast.parse('if a and b and c and d: pass').body[0]
+        new = ast.parse('if a and b or c and d: pass').body[0]
+        found = []
+        self.assertTrue(bool_regroups(old, new, found))
+        (line, col, leaves, old_shape, new_shape, negated), = found
+        self.assertEqual(leaves, 4)
+        self.assertNotEqual(bool_outcome(old_shape, 'TTFF'), bool_outcome(new_shape, 'TTFF'))  # new: a and b
+        self.assertEqual(bool_outcome(old_shape, 'TFTF'), bool_outcome(new_shape, 'TFTF'))  # both false
+        self.assertNotEqual(bool_outcome(old_shape, 'TTFT'), bool_outcome(new_shape, 'TTFT'))
+        self.assertEqual(bool_outcome(old_shape, 'FFFF'), bool_outcome(new_shape, 'FFFF'))
+        self.assertEqual(bool_outcome(new_shape, 'FETT'), True)  # `a and b` stops at a
+        self.assertEqual(bool_outcome(old_shape, 'TETT'), 'raise')
+        found = []
+        self.assertTrue(bool_regroups(old, ast.parse('if a and not b and c and d: pass').body[0], found))
+        self.assertEqual(found[0][5], (1,))
+        found = []
+        self.assertTrue(bool_regroups(ast.parse('if a and b is None: pass').body[0],
+                                      ast.parse('if a and b is not None: pass').body[0], found))
+        self.assertEqual(found[0][5], (1,))
+        self.assertFalse(bool_regroups(old, ast.parse('if a and c and b and d: pass').body[0], []))
+
+    def test_differ_hooks(self):
+        old = 'from __future__ import annotations\ndef f(x, y=None) -> int:\n    return x\n'
+        differ = Differ(set(), set(), postponed=True, has_function=lambda key: key == '2:f')
+        differ.block(ast.parse(old).body, ast.parse(old.replace('-> int', '-> str')).body, ast.parse(old), 'module')
+        self.assertEqual((differ.lines, differ.default_changes), (set(), []))
+        differ = Differ(set(), set(), postponed=True, has_function=lambda key: key == '2:f')
+        differ.block(ast.parse(old).body, ast.parse(old.replace('y=None', 'y=0')).body, ast.parse(old), 'module')
+        self.assertEqual((differ.lines, differ.default_changes), (set(), [('2:f', ['y'])]))
+        body = 'def f(a, b):\n    if a and b:\n        return 1\n'
+        differ = Differ(set(), set(), has_bool_site=lambda line, col, leaves: (line, leaves) == (2, 2))
+        differ.block(ast.parse(body).body, ast.parse(body.replace('a and b', 'a or b')).body, ast.parse(body), 'module')
+        self.assertEqual(differ.lines, set())
+        self.assertEqual([r[:3] for r in differ.regroups], [(2, 7, 2)])
+        self.assertEqual(differ.regroups[0][5], ())
 
 
 class CommandTests(unittest.TestCase):

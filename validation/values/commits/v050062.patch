@@ -1,0 +1,13 @@
+diff --git a/sqlglot/dialects/dialect.py b/sqlglot/dialects/dialect.py
+index 0000000..1111111 100644
+--- a/sqlglot/dialects/dialect.py
++++ b/sqlglot/dialects/dialect.py
+@@ -1985,7 +1985,7 @@
+ 
+ 
+ def timestamptrunc_sql(
+-    func: str = "DATE_TRUNC", zone: bool = False
++    func: str = 'DATE_TRUNCX', zone: bool = False
+ ) -> t.Callable[[Generator, exp.TimestampTrunc], str]:
+     def _timestamptrunc_sql(self: Generator, expression: exp.TimestampTrunc) -> str:
+         args = [weekstart_unit_to_str(self, expression), expression.this]

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/mysql.py b/sqlglot/parsers/mysql.py
+index 0000000..1111111 100644
+--- a/sqlglot/parsers/mysql.py
++++ b/sqlglot/parsers/mysql.py
+@@ -573,7 +573,7 @@
+         return self.expression(
+             exp.UniqueColumnConstraint(
+                 this=self.expression(exp.Schema(this=this, expressions=expressions)),
+-                index_type=index_type or self._parse_index_type(),
++                index_type=index_type and self._parse_index_type(),
+                 options=self._parse_index_constraint_options(),
+             )
+         )

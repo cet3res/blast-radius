@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/query.py b/sqlglot/expressions/query.py
+index 0000000..1111111 100644
+--- a/sqlglot/expressions/query.py
++++ b/sqlglot/expressions/query.py
+@@ -1916,7 +1916,7 @@
+             if not outputs:
+                 outputs = [c.alias_or_name for c in self.expressions]
+ 
+-        if not excluded or not outputs:
++        if not excluded and not outputs:
+             return {}
+ 
+         pre_rename = [c for c in pre_pivot_columns if c not in excluded] + outputs

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/merge_subqueries.py b/sqlglot/optimizer/merge_subqueries.py
+index 0000000..1111111 100644
+--- a/sqlglot/optimizer/merge_subqueries.py
++++ b/sqlglot/optimizer/merge_subqueries.py
+@@ -157,7 +157,7 @@
+ 
+ def merge_ctes(
+     expression: E,
+-    leave_tables_isolated: bool = False,
++    leave_tables_isolated: bool = True,
+     scopes: list[Scope] | None = None,
+     copy_budget: CopyBudget | None = None,
+ ) -> tuple[E, bool]:

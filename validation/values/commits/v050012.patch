@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generator.py b/sqlglot/generator.py
+index 0000000..1111111 100644
+--- a/sqlglot/generator.py
++++ b/sqlglot/generator.py
+@@ -6335,7 +6335,7 @@
+             self.unsupported("ARRAY_SORT only sorts ascending with NULLs last")
+         return self.func("ARRAY_SORT", expression.this, expression.expression)
+ 
+-    def variance_sql(self, expression: exp.Variance, window: exp.Window | None = None) -> str:
++    def variance_sql(self, expression: exp.Variance, window: exp.Window | None = "") -> str:
+         this = expression.this
+         name = self.VARIANCE_NAME or self.function_name(expression)
+         if not expression.args.get("single_value_returns_zero"):

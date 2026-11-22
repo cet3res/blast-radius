@@ -30,7 +30,8 @@ Simulated CI seconds, lower is better: busiest worker seconds + 2 s per worker +
 - v2: syntax-tree diff, statement-level coverage, import-state fingerprints, operand-type profile: **115.6 s, 0 misses** on the sample; 0 misses on 364 synthetic changes with real test outcomes (see `docs/results.md`). Practice board: 186.3 s (174.8 simulated + 11.5 CPU)
 - v2 + CPU cut (`b39c886`): practice board 181.0 s (174.8 simulated + 6.2 CPU)
 - v3: differential checks for the TPC-DS execution test (21 s) and `test_optimized_tpch`: on the validation sets with real outcomes, simulated seconds drop 26% (mutants-1 730.7 -> 540.8 s), 0 misses (see `docs/results.md`). Practice board (`7c8bcbf`): **163.1 s** (154.8 simulated + 8.3 CPU, 0 misses)
-- v4: key-level narrowing of changed dict/set entries; fingerprint children run with sqlglot's test-mode validation: mutants-1 540.8 -> 478.4 s, new entry-mutation set 681.8 -> 359.4 s, 0 misses on all 428 validation commits
+- v4: key-level narrowing of changed dict/set entries; fingerprint children run with sqlglot's test-mode validation: mutants-1 540.8 -> 478.4 s, new entry-mutation set 681.8 -> 359.4 s, 0 misses on all 428 validation commits. Practice board (`c93caa3`): **145.9 s** (139.0 simulated + 6.9 CPU, 0 misses)
+- v5: default-argument, annotation and boolean-operator profiles: mutants-1 478.4 -> 444.0 s, 0 misses
 
 ## How it works
 
@@ -72,6 +73,28 @@ are the change:
 - a module that no longer imports, or a change to process-wide state, selects
   everything; a change to what `import sqlglot` loads also selects the test that
   imports sqlglot in a subprocess.
+
+### Default arguments, annotations and boolean operators
+
+Three common edits used to select every test that ran the edited code:
+
+- **Annotation-only header edits** select nothing when the module postpones annotations
+  (`from __future__ import annotations`, 174 of 184 files): annotations are then strings
+  that sqlglot never reads (its only signature readers take parameter names).
+- **Changed default values** of module- or class-level functions select the tests that
+  called the function with that parameter bound to its default object (explicitly
+  passing the same object counts too). `tools/build_values.py` records this per test
+  with `sys.monitoring` at function entry, for 618 of the 633 such functions.
+- **`and`/`or` regrouped or flipped, leaves negated** (`not x`, `is`/`is not`,
+  `in`/`not in`, `==`/`!=`): for each boolean expression inside a function that is
+  used for its truth value and whose leaves have no side effects, the same tool records
+  per test every vector of leaf truth values it produced, evaluating for the record
+  the leaves short-circuiting skipped ('E' when one raises). The selector evaluates the
+  old and the new tree on each vector (Python's short-circuit order, a raising leaf
+  raises) and selects the tests with a vector that changes.
+
+A patched run is identical to the pinned one until the edited code first behaves
+differently; these profiles show that, for the tests left out, it never does.
 
 ### Changed dict and set entries
 

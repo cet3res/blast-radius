@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import ast
 import bisect
+import copy
 import difflib
 import gzip
 import json
@@ -477,6 +478,119 @@ def swap_sites(a, b, sites, top=True) -> bool:
     return a == b
 
 
+def bool_shape(node, leaves):
+    """The and/or structure of a boolean tree over its leaves (collected in order)."""
+    if isinstance(node, ast.BoolOp):
+        return (isinstance(node.op, ast.Or), tuple(bool_shape(v, leaves) for v in node.values))
+    leaves.append(node)
+    return len(leaves) - 1
+
+
+NEGATED = {ast.Is: ast.IsNot, ast.IsNot: ast.Is, ast.In: ast.NotIn, ast.NotIn: ast.In,
+           ast.Eq: ast.NotEq, ast.NotEq: ast.Eq}
+
+
+def negates(x, y) -> bool:
+    """y is the logical negation of x: `not x`, or a single comparison with the opposite
+    operator (is/is not, in/not in, ==/!=)."""
+    if isinstance(y, ast.UnaryOp) and isinstance(y.op, ast.Not) and dump(y.operand) == dump(x):
+        return True
+    if isinstance(x, ast.UnaryOp) and isinstance(x.op, ast.Not) and dump(x.operand) == dump(y):
+        return True
+    if (isinstance(x, ast.Compare) and isinstance(y, ast.Compare) and len(x.ops) == len(y.ops) == 1
+            and NEGATED.get(type(x.ops[0])) is type(y.ops[0])):
+        return dump(x.left) == dump(y.left) and dump(x.comparators[0]) == dump(y.comparators[0])
+    return False
+
+
+def bool_regroups(a, b, found, top=True) -> bool:
+    """True when two trees differ only in how `and`/`or` combine the same leaves, some of
+    them possibly negated. Changed boolean trees are collected as (line, col, leaf count,
+    old shape, new shape, negated leaves) of the outermost operator. For a statement,
+    only its own header is compared."""
+    if isinstance(a, ast.BoolOp) and isinstance(b, ast.BoolOp):
+        old_leaves, new_leaves = [], []
+        old, new = bool_shape(a, old_leaves), bool_shape(b, new_leaves)
+        if len(old_leaves) != len(new_leaves):
+            return False
+        negated = []
+        for i, (x, y) in enumerate(zip(old_leaves, new_leaves)):
+            if dump(x) != dump(y):
+                if not negates(x, y):
+                    return False
+                negated.append(i)
+        if old != new or negated:
+            found.append((a.lineno, a.col_offset, len(old_leaves), old, new, tuple(negated)))
+        return True
+    if type(a) is not type(b):
+        return False
+    if isinstance(a, ast.AST):
+        for field in a._fields:
+            if top and isinstance(a, ast.stmt) and field in BLOCK_FIELDS:
+                continue
+            if not bool_regroups(getattr(a, field, None), getattr(b, field, None), found, False):
+                return False
+        return True
+    if isinstance(a, list):
+        return len(a) == len(b) and all(bool_regroups(x, y, found, False) for x, y in zip(a, b))
+    return a == b
+
+
+def negate_leaves(vector, negated):
+    flip = {'T': 'F', 'F': 'T', 'E': 'E'}
+    return ''.join(flip[c] if i in negated else c for i, c in enumerate(vector))
+
+
+def bool_outcome(shape, vector):
+    """Truth of a boolean tree for leaf truths 'T'/'F', or 'raise' on reaching an 'E' leaf."""
+    if isinstance(shape, int):
+        return 'raise' if vector[shape] == 'E' else vector[shape] == 'T'
+    is_or, kids = shape
+    result = None
+    for kid in kids:
+        result = bool_outcome(kid, vector)
+        if result == 'raise' or result is is_or:
+            return result
+    return result
+
+
+def default_edits(a, b, postponed) -> list[str] | None:
+    """Parameters whose default value alone changed between two versions of a def, or None
+    when anything else in the header changed. Annotations are ignored when the module
+    postpones them (`from __future__ import annotations`): they are then stored as strings
+    that sqlglot never reads (only parameter names, via getfullargspec/signature)."""
+    def normalized(fn):
+        args = copy.deepcopy(fn.args)
+        args.defaults = [ast.Constant(None) for _ in args.defaults]
+        args.kw_defaults = [None if d is None else ast.Constant(None) for d in args.kw_defaults]
+        if postponed:
+            for arg in args.posonlyargs + args.args + args.kwonlyargs + [args.vararg, args.kwarg]:
+                if arg is not None:
+                    arg.annotation = None
+        clone = ast.FunctionDef(name=fn.name, args=args, body=[], decorator_list=fn.decorator_list,
+                                returns=None if postponed else fn.returns, type_comment=None,
+                                type_params=getattr(fn, 'type_params', []))
+        return header_dump(clone)
+
+    if normalized(a) != normalized(b):
+        return None
+    positional = [x.arg for x in a.args.posonlyargs + a.args.args]
+    changed = []
+    offset = len(positional) - len(a.args.defaults)
+    for i, (x, y) in enumerate(zip(a.args.defaults, b.args.defaults)):
+        if dump(x) != dump(y):
+            changed.append(positional[offset + i])
+    for arg, x, y in zip(a.args.kwonlyargs, a.args.kw_defaults, b.args.kw_defaults):
+        if x is not None and dump(x) != dump(y):
+            changed.append(arg.arg)
+    return changed
+
+
+def postpones_annotations(tree) -> bool:
+    return any(isinstance(s, ast.ImportFrom) and s.module == '__future__' and any(n.name == 'annotations' for n in s.names)
+               for s in tree.body)
+
+
 SAFE_EXPRESSIONS = (
     ast.Constant, ast.Name, ast.Attribute, ast.Tuple, ast.List, ast.Set, ast.Dict, ast.UnaryOp,
     ast.BinOp, ast.BoolOp, ast.Compare, ast.Subscript, ast.IfExp, ast.Slice, ast.Starred,
@@ -553,10 +667,17 @@ class Differ:
     """Locate a Python edit: lines whose executors are affected, and import-time edits."""
 
     def __init__(self, import_lines: set[int], import_lambdas: set[int], texts=None, edited=None, module_names=(),
-                 agree=None):
+                 agree=None, postponed=False, has_function=None, has_bool_site=None):
         # agree(line, col) -> True when identity and equality give the same answer for every
         # operand pair the tests evaluated at that comparison (from the type profile).
         self.agree = agree
+        # Value profiles (tools/build_values.py): has_function(key) and has_bool_site(line, col).
+        self.postponed = postponed
+        self.has_function = has_function
+        self.has_bool_site = has_bool_site
+        self.default_changes: list[tuple[str, list[str]]] = []  # (function key, parameters)
+        self.regroups: list[tuple] = []  # (line, col, leaves, old shape, new shape, negated leaves)
+        self.profiled_lines: set[int] = set()  # statements judged by a profile instead of coverage
         self.lines: set[int] = set()
         self.shared: set[str] = set()  # long-lived state written by edited run-time code
         self.module_names = set(module_names)
@@ -640,6 +761,20 @@ class Differ:
         else:
             self.add(full_lines(parent))
 
+    def flipped(self, a, b, lines) -> bool:
+        """The edit only regroups `and`/`or` over the same leaves, at boolean trees whose
+        leaf truths the tests profiled."""
+        if self.has_bool_site is None:
+            return False
+        found = []
+        if not (bool_regroups(a, b, found) and found and all(self.has_bool_site(f[0], f[1], f[2]) for f in found)):
+            return False
+        self.regroups.extend(found)
+        self.profiled_lines |= set(lines)
+        if set(lines) & self.import_lines:
+            self.import_time = True
+        return True
+
     def equivalent(self, a, b) -> bool:
         """The edit only swaps `is` and `==` where the tests never see a difference."""
         if self.agree is None:
@@ -652,6 +787,21 @@ class Differ:
             self.changed(a, scope, b)
             return
         if isinstance(a, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if header_dump(a) != header_dump(b) and scope != 'function' and inert_header_change(a, b):
+                changed = default_edits(a, b, self.postponed)
+                key = f'{first_line(a)}:{a.name}'
+                if changed is not None and (not changed or (self.has_function and self.has_function(key))):
+                    # Only annotations (stored as strings nobody reads) and/or default values
+                    # changed: a default matters only to calls that left it out.
+                    if changed:
+                        self.default_changes.append((key, changed))
+                        self.profiled_lines |= set(full_lines(a))
+                        if set(range(a.body[0].lineno, a.end_lineno + 1)) & self.import_lines:
+                            self.import_time = True
+                    if bindings(a) != bindings(b):
+                        self.add_function(a)
+                    self.block(a.body, b.body, a, 'function')
+                    return
             if header_dump(a) != header_dump(b):
                 # Callers see new arguments, defaults or decorators.
                 self.add_function(a)
@@ -672,7 +822,8 @@ class Differ:
             self.block(a.body, b.body, a, 'class' if scope != 'function' else 'function')
             return
         if isinstance(a, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.With, ast.AsyncWith)):
-            if header_dump(a) != header_dump(b) and not self.equivalent(a, b):
+            if header_dump(a) != header_dump(b) and not self.equivalent(a, b) and not (
+                    scope == 'function' and self.flipped(a, b, header_lines(a))):
                 if scope == 'function':
                     self.add(header_lines(a))
                     for field in ('test', 'iter', 'target', 'items'):
@@ -698,6 +849,8 @@ class Differ:
                     self.block(x.body, y.body, a, scope)
             return
         if dump(a) == dump(b) or self.equivalent(a, b):
+            return
+        if scope == 'function' and self.flipped(a, b, full_lines(a)):
             return
         if scope == 'function':
             self.changed(a, scope, b)
@@ -770,6 +923,19 @@ class DependencyMap:
         for index, commands in data['subprocess'].items():
             (self.import_only_spawners if all(import_only_command(c) for c in commands)
              else self.other_spawners).add(int(index))
+
+    def value_map(self):
+        """tools/build_values.py output next to the map, loaded on first use (None if absent)."""
+        if not hasattr(self, '_value_map'):
+            self._value_map = None
+            try:
+                with gzip.open(self.path.parent / 'values.json.gz', 'rt') as f:
+                    data = json.load(f)
+                if data.get('version') == 1 and data.get('revision') == PIN:
+                    self._value_map = data
+            except (OSError, ValueError):
+                pass
+        return self._value_map
 
     def key_map(self):
         """tools/build_keys.py output next to the map, loaded on first use (None if absent)."""
@@ -1551,15 +1717,30 @@ class Selector:
         old_tree = self.m.tree(path)
         _, import_lines = self.m.line_sets(path)
         texts = (old_text.split('\n'), new_text.split('\n'))
+        def has_function(key):  # the profile is loaded only when an edit could use it
+            values = self.m.value_map()
+            return values is not None and f'{path}:{key}' in values['defaults']
+
+        def has_bool_site(line, col, leaves):
+            values = self.m.value_map()
+            entry = values['boolops'].get(f'{path}:{line}:{col}') if values is not None else None
+            return entry is not None and all(len(v) == leaves for v in entry['vectors'])
         differ = Differ(import_lines, self.m.import_lambdas(path), texts, edited,
-                        module_level_names(old_tree) | module_level_names(new_tree), self.m.agreement(path))
+                        module_level_names(old_tree) | module_level_names(new_tree), self.m.agreement(path),
+                        postpones_annotations(old_tree) and postpones_annotations(new_tree), has_function, has_bool_site)
         differ.block(old_tree.body, new_tree.body, old_tree, 'module')
-        self.py_info[path] = (set(differ.lines), differ.import_time, set(differ.shared))
+        self.py_info[path] = (set(differ.lines) | differ.profiled_lines, differ.import_time, set(differ.shared))
+        profiled = self.value_tests(path, differ)
+        if profiled and explain is not None:
+            explain.append(f'{path}: profiles {len(differ.default_changes)} defaults, {len(differ.regroups)} and/or '
+                           f'-> {len(profiled)} tests')
         if not differ.lines and not differ.import_time and not differ.shared:
+            if profiled:
+                return profiled, False
             if explain is not None:
                 explain.append(f'{path}: no syntax change')
             return set(), False
-        tests = self.m.executors(path, differ.lines)
+        tests = self.m.executors(path, differ.lines) | profiled
         if differ.shared:
             names = sorted(differ.shared)
             tests |= self.references(
@@ -1569,6 +1750,27 @@ class Selector:
         if explain is not None:
             explain.append(f'{path}: {len(differ.lines)} lines -> {len(tests)} tests, import time: {differ.import_time}')
         return tests, differ.import_time
+
+    def value_tests(self, path, differ) -> set[int]:
+        """Tests that used a changed default or saw mixed operands at a flipped and/or site."""
+        if not differ.default_changes and not differ.regroups:
+            return set()
+        values = self.m.value_map()
+        sets = values['sets']
+        tests = set(values['broken'])
+        for key, params in differ.default_changes:
+            entry = values['defaults'][f'{path}:{key}']
+            for param in params:
+                if entry.get(param) is not None:
+                    tests.update(sets[entry[param]])
+        for line, col, _, old, new, negated in differ.regroups:
+            entry = values['boolops'][f'{path}:{line}:{col}']
+            if entry['opaque'] is not None:
+                tests.update(sets[entry['opaque']])
+            for vector, sid in entry['vectors'].items():
+                if bool_outcome(old, vector) != bool_outcome(new, negate_leaves(vector, negated)):
+                    tests.update(sets[sid])
+        return tests
 
     def import_state_change(self, sources, new_modules, explain):
         changed, keyed = self.state.changes(sources)
