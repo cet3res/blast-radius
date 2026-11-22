@@ -24,4 +24,5 @@
 - [x] Key-level narrowing of changed dict/set entries (plan step 3): mutants-1 -11.5%, entries set -47%, 0 misses on 428 commits.
 - [x] Run fingerprint/check children in sqlglot's test mode (`import unittest`): fixed a pre-existing miss.
 - [x] Annotation-only, default-value and and/or (regroup, negated leaves) edits judged by per-test profiles (tools/build_values.py).
+- [x] Run cheap selections in the container with a build-time cost model (plan step 4): sample 106.9 -> 97.1 s, 0 misses.
 - [ ] Per-case verification of optimizer fixture tests (`check_file`: test_tpcds, test_qualify_columns...) (plan step 5).

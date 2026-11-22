@@ -159,6 +159,39 @@ and changed defaults select the tests that relied on them (e.g. 239 -> 182 tests
 CPU went down (mutants-1 19.9 s here, 24.8 s in the container, was 30.8 s) because
 fewer TPC checks are needed; container output identical on mutants-1 and values.
 
+## v6: running cheap selections, official sample (November 22, 2026)
+
+The official sample (30 commits, `tests.json` with recorded durations, answers) and
+`score.py` became available. `sample/` stays out of the repository (kit rules);
+numbers below use the official durations.
+
+| Version | Sample simulated | Misses |
+| --- | ---: | ---: |
+| `2594d55` (board 186.3) | 115.565 | 0 |
+| `7c8bcbf` (board 163.1) | 115.565 | 0 |
+| `c93caa3` (board 145.9) | 106.902 | 0 |
+| `15bc172` (board 145.9) | 106.902 | 0 |
+| v6 | **97.076** | 0 |
+
+Oracle 94.351. In the container with the scorer's flags: 97.076 simulated + 5.62 s CPU
+= **102.7 s**, identical to the local run. Verification ran on 6 commits (4 break
+nothing and now select nothing; 2 keep only their failing tests) and was skipped by
+the cost rule where optimizer or executor tests (pandas, duckdb, CSV loading) would
+dominate.
+
+Validation sets (official durations, local CPU including children), all 0 misses:
+
+| Set | Without running tests | With | CPU without / with |
+| --- | ---: | ---: | ---: |
+| mutants-1 | 455.7 | 438.9 | 24.8 / 25.9 s |
+| mutants-2-extended | 663.6 | 640.3 | 48.5 / 51.1 s |
+| swaps | 163.9 | 159.9 | 14.3 / 14.2 s |
+| entries | 368.2 | 366.2 | 42.5 / 38.8 s |
+| values | 349.7 | 343.3 | 26.2 / 26.3 s |
+
+The practice board has behaved differently from the sample (TPC checks: -20 s on the
+board, 0 on the sample), so the board result is the real test.
+
 ## Practice board
 
 | Commit | Score | Simulated | CPU | Misses |

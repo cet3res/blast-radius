@@ -299,6 +299,12 @@ def main():
     request = json.loads(sys.stdin.read())
     cache = request.get('cache')
     codes = load_codes(cache) if cache and not request.get('write_cache') else {}
+    if 'files' in request:
+        result = measure_test_costs(request, codes)
+        if request.get('write_costs'):
+            write_atomic(request['write_costs'], lambda f: json.dump(result['costs'], f))
+        print(json.dumps({'ok': True}))
+        return
     if 'checks' in request:
         result = run_checks(request, codes)
         if request.get('write_checks'):
@@ -699,6 +705,174 @@ def run_checks(request, codes, baseline=None):
     return {'ok': True, 'checks': out}
 
 
+# ---------------------------------------------------------------- running tests
+
+def run_tests(request, codes):
+    """Run catalog tests against the patched sources, as pytest would judge them.
+
+    request['tests']: test ids in the order to run; request['source']: a checkout of the
+    pinned revision holding tests/ (and fixtures). sqlglot itself comes from the
+    request's overrides and the compiled baseline modules. A test passes when its
+    module imports, its class setup succeeds and it records no failure, error,
+    failing subtest or unexpected success; skips pass. Runs stop at the first test
+    that does not pass when request['stop'] is set. Answer: {id: True/False}.
+    """
+    import io
+    import unittest
+    devnull = os.open(os.devnull, os.O_WRONLY)
+    os.dup2(devnull, 1)  # tests print; stdout is the server's answer channel
+    os.dup2(devnull, 2)
+    sys.stdout = io.TextIOWrapper(os.fdopen(1, 'wb', closefd=False), write_through=True)
+    sys.stderr = io.TextIOWrapper(os.fdopen(2, 'wb', closefd=False), write_through=True)
+    overrides = request.get('overrides', {})
+    finder = Finder(dict(overrides), codes, set(overrides), set(overrides) | set(codes))
+    sys.meta_path.insert(0, finder)
+    # Pool workers would import sqlglot from disk, unpatched: run their tasks here, with
+    # the same pickle round trips (as the map builder does).
+    import concurrent.futures
+    import pickle
+
+    class InProcessPool(concurrent.futures.Executor):
+        def __init__(self, *args, initializer=None, initargs=(), **kwargs):
+            if initializer:
+                initializer(*pickle.loads(pickle.dumps(initargs)))
+
+        def submit(self, fn, /, *args, **kwargs):
+            future = concurrent.futures.Future()
+            try:
+                fn, args, kwargs = pickle.loads(pickle.dumps((fn, args, kwargs)))
+                future.set_result(pickle.loads(pickle.dumps(fn(*args, **kwargs))))
+            except BaseException as error:  # noqa: BLE001
+                future.set_exception(error)
+            return future
+
+        def shutdown(self, wait=True, *, cancel_futures=False):
+            pass
+
+    concurrent.futures.ProcessPoolExecutor = InProcessPool
+    source = request['source']
+    os.chdir(source)
+    sys.path.insert(0, source)
+    os.environ['SKIP_INTEGRATION'] = '0'
+    results = {}
+    groups = []  # consecutive tests of one class run as one suite (setUpClass once, as pytest)
+    for test_id in request['tests']:
+        path, cls_name, method = test_id.split('::')
+        if groups and groups[-1][0] == (path, cls_name):
+            groups[-1][1].append((method, test_id))
+        else:
+            groups.append(((path, cls_name), [(method, test_id)]))
+    for (path, cls_name), members in groups:
+        try:
+            module = importlib.import_module(path[:-3].replace('/', '.'))
+            cls = getattr(module, cls_name)
+            suite = unittest.TestSuite(cls(method) for method, _ in members)
+        except BaseException:  # noqa: BLE001 - the file cannot be imported: its tests fail
+            for _, test_id in members:
+                results[test_id] = False
+            if request.get('stop'):
+                break
+            continue
+        result = unittest.TestResult()
+        suite.run(result)
+        bad = set()
+        whole_class = False
+        for test, _ in result.errors + result.failures:
+            case = getattr(test, 'test_case', test)  # a failing subtest fails its test
+            name = getattr(case, '_testMethodName', None)
+            if name is None:
+                whole_class = True  # setUpClass/tearDownClass failed
+            else:
+                bad.add(name)
+        for case in result.unexpectedSuccesses:
+            bad.add(getattr(case, '_testMethodName', None))
+        for method, test_id in members:
+            results[test_id] = not whole_class and method not in bad
+        if request.get('stop') and not all(results[t] for _, t in members):
+            break
+    return {'ok': True, 'results': results}
+
+
+def measure_test_costs(request, codes):
+    """Image build: CPU seconds to import each test module and to set up each test class,
+    each measured in a fresh fork as a verification would pay them."""
+    import json as _json
+    costs = {}
+    files = request['files']
+    for path in files:
+        read, write = os.pipe()
+        pid = os.fork()
+        if pid == 0:
+            os.close(read)
+            out = {}
+            try:
+                devnull = os.open(os.devnull, os.O_WRONLY)
+                os.dup2(devnull, 1)
+                os.dup2(devnull, 2)
+                finder = Finder({}, codes, set(), set(codes))
+                sys.meta_path.insert(0, finder)
+                os.chdir(request['source'])
+                sys.path.insert(0, request['source'])
+                os.environ['SKIP_INTEGRATION'] = '0'
+                import unittest  # noqa: F401
+                import ast as _ast
+                # Test modules this one imports are measured on their own: load them first and
+                # charge only this module's own share (the selector sums over the union).
+                deps = []
+                tree = _ast.parse(open(os.path.join(request['source'], path), encoding='utf-8').read())
+                for node in tree.body:
+                    names = []
+                    if isinstance(node, _ast.ImportFrom) and node.module and node.module.startswith('tests'):
+                        names = [node.module]
+                    elif isinstance(node, _ast.Import):
+                        names = [a.name for a in node.names if a.name.startswith('tests')]
+                    for name in names:
+                        rel = name.replace('.', '/') + '.py'
+                        if rel != path and os.path.exists(os.path.join(request['source'], rel)):
+                            importlib.import_module(name)
+                            deps.append(rel)
+                start = os.times()
+                module = importlib.import_module(path[:-3].replace('/', '.'))
+                now = os.times()
+                out[path] = now.user + now.system - start.user - start.system
+                out['deps:' + path] = deps
+                for name, cls in vars(module).items():
+                    if isinstance(cls, type) and 'setUpClass' in vars(cls) and cls.__module__ == module.__name__:
+                        start = os.times()
+                        try:
+                            cls.setUpClass()
+                            cls.tearDownClass()
+                            cls.doClassCleanups()
+                        except BaseException:  # noqa: BLE001
+                            pass
+                        now = os.times()
+                        out[f'{path}::{name}'] = now.user + now.system - start.user - start.system
+            except BaseException:  # noqa: BLE001 - not importable here: never verified
+                out[path] = None
+            with os.fdopen(write, 'w') as f:
+                f.write(_json.dumps(out))
+            os._exit(0)
+        os.close(write)
+        with os.fdopen(read) as f:
+            text = f.read()
+        os.waitpid(pid, 0)
+        try:
+            costs.update(_json.loads(text))
+        except ValueError:
+            costs[path] = None
+    start = os.times()
+    pid = os.fork()
+    if pid == 0:
+        finder = Finder({}, codes, set(), set(codes))
+        sys.meta_path.insert(0, finder)
+        import sqlglot  # noqa: F401
+        os._exit(0)
+    os.waitpid(pid, 0)
+    now = os.times()
+    costs['<fork>'] = now.children_user + now.children_system - start.children_user - start.children_system
+    return {'ok': True, 'costs': costs}
+
+
 def serve():
     """Answer one request per input line, each in a fresh fork of this process.
 
@@ -746,6 +920,8 @@ def serve():
             try:
                 if 'checks' in request:
                     result = run_checks(request, codes, checks_baseline) if checks_baseline else {'ok': False, 'error': 'no check baseline'}
+                elif 'tests' in request:
+                    result = run_tests(request, codes)
                 else:
                     result = compute(request, codes, base)
             except BaseException as error:  # noqa: BLE001

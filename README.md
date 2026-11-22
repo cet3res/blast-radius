@@ -31,7 +31,8 @@ Simulated CI seconds, lower is better: busiest worker seconds + 2 s per worker +
 - v2 + CPU cut (`b39c886`): practice board 181.0 s (174.8 simulated + 6.2 CPU)
 - v3: differential checks for the TPC-DS execution test (21 s) and `test_optimized_tpch`: on the validation sets with real outcomes, simulated seconds drop 26% (mutants-1 730.7 -> 540.8 s), 0 misses (see `docs/results.md`). Practice board (`7c8bcbf`): **163.1 s** (154.8 simulated + 8.3 CPU, 0 misses)
 - v4: key-level narrowing of changed dict/set entries; fingerprint children run with sqlglot's test-mode validation: mutants-1 540.8 -> 478.4 s, new entry-mutation set 681.8 -> 359.4 s, 0 misses on all 428 validation commits. Practice board (`c93caa3`): **145.9 s** (139.0 simulated + 6.9 CPU, 0 misses)
-- v5: default-argument, annotation and boolean-operator profiles: mutants-1 478.4 -> 444.0 s, 0 misses
+- v5: default-argument, annotation and boolean-operator profiles: mutants-1 478.4 -> 444.0 s, 0 misses. Practice board (`15bc172`): 145.9 s (no practice commit affected)
+- v6: run cheap selections against the patch in the container: official sample **97.076 s simulated + 5.6 s CPU = 102.7 s** in the container (was 106.902 simulated), 0 misses on the sample and on all 491 validation commits
 
 ## How it works
 
@@ -73,6 +74,27 @@ are the change:
 - a module that no longer imports, or a change to process-wide state, selects
   everything; a change to what `import sqlglot` loads also selects the test that
   imports sqlglot in a subprocess.
+
+### Running cheap selections
+
+On the official sample, every second left above the oracle came from commits that
+break nothing but select a few cheap tests (each costs its tests plus 2 s for the
+worker). The image therefore carries sqlglot's tests and fixtures at the pinned commit
+(GitHub archive, fetched at build) and the packages they import at the locked versions
+(`requirements-tests.txt`, PyPI). When a patch only edits existing sqlglot modules,
+the selector may run its selected tests in a fork of the fingerprint server: the
+patched sqlglot is imported from memory, test modules from the checkout, process-pool
+tasks run in process with their pickle round trips (pool workers would import sqlglot
+from disk), and a test passes when it imports, its class sets up and it records no
+failure, error, failing subtest or unexpected success, as pytest judges it. Tests that
+start subprocesses are never run. Tests run cheapest first and stop at the first one
+that does not pass; passing tests are dropped from the selection.
+
+It runs only when the estimated CPU (fork, importing the test modules, class setup,
+1.2x the recorded test seconds; import and setup costs measured at image build, by
+`--prepare`) is at most half the simulated seconds a passing run saves. If the
+download fails, or the checkout's test files differ from the map's, the image simply
+does not run tests.
 
 ### Default arguments, annotations and boolean operators
 

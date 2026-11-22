@@ -1,0 +1,9 @@
+# Packages sqlglot's tests import, at the versions in requirements.lock (the labeling
+# environment), installed without their dependencies so nothing resolves differently.
+duckdb==2.0.0
+numpy==2.5.5
+pandas==3.1.1
+python-dateutil==4.0.0
+pytz==2026.6
+tzdata==2026.6
+setuptools==84.2.1

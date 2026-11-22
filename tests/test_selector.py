@@ -1,4 +1,5 @@
 import ast
+from pathlib import Path
 import unittest
 
 from selector import (
@@ -420,6 +421,48 @@ class ValueProfileTests(unittest.TestCase):
         self.assertEqual(differ.lines, set())
         self.assertEqual([r[:3] for r in differ.regroups], [(2, 7, 2)])
         self.assertEqual(differ.regroups[0][5], ())
+
+
+class VerifyTests(unittest.TestCase):
+    """Selected tests run against the patch when that is cheap next to what it saves."""
+
+    def setUp(self):
+        import time
+        from types import SimpleNamespace
+        import selector
+        self.selector_module = selector
+        self.ran = []
+        catalog = [{'number': 0, 'id': 'tests/a.py::A::t0'}, {'number': 1, 'id': 'tests/a.py::A::t1'},
+                   {'number': 2, 'id': 'tests/b.py::B::t2'}]
+        costs = {'<fork>': 0.05, 'tests/a.py': 0.1, 'deps:tests/a.py': ['tests/b.py'], 'tests/b.py': 0.1,
+                 'tests/b.py::B': 5.0}
+
+        def run_tests(ids, overrides, cpu_limit):
+            self.ran.append(list(ids))
+            return {ids[0]: True, ids[1]: False} if len(ids) > 1 else {ids[0]: True}
+
+        state = SimpleNamespace(started=time.monotonic(), test_costs=lambda: costs, run_tests=run_tests)
+        m = SimpleNamespace(catalog=catalog, import_only_spawners=set(), other_spawners=set(), number_of_index=[0, 1, 2])
+        self.sel = selector.Selector.__new__(selector.Selector)
+        self.sel.m, self.sel.state, self.sel.verifiable, self.sel.patched = m, state, True, {}
+        self.old_source = selector.TEST_SOURCE
+        selector.TEST_SOURCE = Path(__file__).resolve().parents[1]  # has a tests/ directory
+
+    def tearDown(self):
+        self.selector_module.TEST_SOURCE = self.old_source
+
+    def test_cheap_selection_runs_cheapest_first(self):
+        self.assertEqual(self.sel.verify({0, 1}, {0: 100, 1: 50, 2: 10}), {0})
+        self.assertEqual(self.ran, [['tests/a.py::A::t1', 'tests/a.py::A::t0']])
+
+    def test_expensive_class_setup_is_skipped(self):
+        self.assertEqual(self.sel.verify({2}, {0: 100, 1: 50, 2: 10}), {2})
+        self.assertEqual(self.ran, [])
+
+    def test_not_for_other_edits(self):
+        self.sel.verifiable = False
+        self.assertEqual(self.sel.verify({0}, {0: 100, 1: 50, 2: 10}), {0})
+        self.assertEqual(self.ran, [])
 
 
 class CommandTests(unittest.TestCase):

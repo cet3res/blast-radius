@@ -28,7 +28,8 @@ entries are read by the organizers.
 | CPU cut, submitted | `b39c886` | 115.6 s, 0 misses | 181.0 s = 174.774 simulated + 6.2 CPU |
 | TPC differential checks | `7c8bcbf` | not measured (no sample here) | **163.1 s** = 154.754 simulated + 8.3 CPU, 0 misses |
 | Key-level dict/set narrowing, test-mode children | `c93caa3` | not measured | **145.9 s** = 139.002 simulated + 6.9 CPU, 0 misses |
-| Default/annotation/boolean profiles | this branch | not measured | not submitted yet (mutants-1 -7.2% vs v4) |
+| Default/annotation/boolean profiles | `15bc172` | 106.902 s, 0 misses | 145.9 s (no practice commit affected) |
+| Running cheap selections in the container | this branch | **97.076 s**, 0 misses (102.7 total in container) | not submitted yet |
 
 **v3 (TPC differential checks).** On the validation sets with real outcomes and a
 locally timed catalog: mutants-1 730.7 -> 540.8 s, mutants-2 849.6 -> 702.7 s,
@@ -151,6 +152,15 @@ class/module data 294 s, fixtures 51 s.
 3. Targeted TPC-DS verification (see table) only if everything else is done.
 
 ## Pitfalls hit during development
+
+- Running tests in a fork: sqlglot is patched in memory, so anything that starts a new
+  interpreter (spawn process pools in test_optimizer/test_executor, `python -c` in
+  test_dialect) would run the unpatched checkout. Pools run in process; subprocess
+  tests are never verified.
+- Files mounted into the container must be readable by `nobody` (uploads copied as
+  root with mode 600 made the run fail on `/data/tests.json`).
+- The practice run has 3 minutes for the batch (4.5 in the final): wall-clock guards
+  stop checks at 100 s, verification at 120 s, patched imports at 140 s.
 
 - sqlglot validates expression arguments strictly only when `unittest` or `pytest`
   is in `sys.modules` (`sqlglot.expressions.core.UNITTEST`, read at import). Every

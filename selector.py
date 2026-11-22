@@ -48,12 +48,18 @@ CHECK_CPU_LIMIT = 25
 FINGERPRINT_CPU_LIMIT = 60
 # Wall-clock guards for the whole run (the scorer allows 4.5 minutes): past the
 # first, selected TPC tests are kept without checks; past the second, commits that
-# need a patched import select every test.
-CHECKS_UNTIL = 150.0
-IMPORTS_UNTIL = 210.0
+# need a patched import select every test. (Practice runs get 3 minutes, the final 4.5.)
+CHECKS_UNTIL = 100.0
+IMPORTS_UNTIL = 140.0
+# Verification by running selected tests (plan step 4): a checkout of the pinned
+# revision (tests and fixtures) put in the image at build; costs measured there.
+VERIFY_RATIO = 0.5    # verify when the estimated CPU is at most this share of the saving
+RUN_FACTOR = 1.2      # CPU seconds per recorded second of a test, in the container
+VERIFY_UNTIL = 120.0  # wall-clock guard: no verification after this
 CHECK_PHASES = ('transpile', 'parse', 'optimize', 'plan')
 MAX_WORKERS = 8
 HERE = Path(__file__).resolve().parent
+TEST_SOURCE = Path(os.environ.get('BLAST_SQLGLOT_SOURCE', str(HERE / 'sqlglot-src')))
 
 
 class Everything(Exception):
@@ -1090,7 +1096,7 @@ class ImportState:
         self.stamp = state_stamp(self.sources, check_inputs)
         self.stamp['order'] = state_stamp({'order': '\n'.join(self.order)})['sources']
         self.temporary = []
-        self.code = self.state = self.checks = self.keys_file = None
+        self.code = self.state = self.checks = self.keys_file = self.costs_file = None
         meta = prepared / 'prepared.json'
         try:
             if json.loads(meta.read_text()) == self.stamp:
@@ -1099,6 +1105,8 @@ class ImportState:
                     self.code, self.state = str(code), str(state)
                     if (prepared / 'baseline-keys.marshal').is_file():
                         self.keys_file = str(prepared / 'baseline-keys.marshal')
+                    if (prepared / 'test-costs.json').is_file():
+                        self.costs_file = str(prepared / 'test-costs.json')
                     checks = prepared / 'baseline-checks.json'
                     if check_inputs is not None and checks.is_file():
                         self.checks = str(checks)
@@ -1172,7 +1180,7 @@ class ImportState:
             except OSError as error:
                 log('fingerprint server unavailable:', error)
                 self.kill_server()
-                if 'checks' in request:
+                if 'checks' in request or 'tests' in request:
                     return None
                 self.runs -= 1
                 return self.run(dict(request, cache=self.code, baseline=self.state, order=self.order))
@@ -1184,7 +1192,7 @@ class ImportState:
             self.kill_server()
             return None
         line = self.readline(2 * int(request.get('cpu_limit') or 60) + 10)
-        kind = 'checks' if 'checks' in request else 'fingerprint'
+        kind = 'checks' if 'checks' in request else 'tests' if 'tests' in request else 'fingerprint'
         self.seconds[kind] = self.seconds.get(kind, 0.0) + time.monotonic() - started
         if line is None:
             log('fingerprint timed out or died')
@@ -1252,6 +1260,40 @@ class ImportState:
             else:
                 self.failed = True
         return self.state is not None
+
+    def test_costs(self) -> dict | None:
+        """CPU to import each test module and set up each test class (measured at build)."""
+        if not hasattr(self, '_costs'):
+            self._costs = None
+            if self.costs_file is not None:
+                try:
+                    self._costs = json.loads(Path(self.costs_file).read_text())
+                except (OSError, ValueError):
+                    pass
+        return self._costs
+
+    def prepare_costs(self, path: str, files, sources: dict) -> bool:
+        """Measure test costs, only if the checkout's test files are the map's, byte for byte."""
+        if self.code is None or not (TEST_SOURCE / 'tests').is_dir():
+            return False
+        for rel, text in sources.items():
+            if rel.startswith('tests/'):
+                try:
+                    if (TEST_SOURCE / rel).read_text(encoding='utf-8') != text:
+                        log(f'test checkout differs from the map at {rel}')
+                        return False
+                except OSError:
+                    return False
+        result = self.run({'files': sorted(files), 'source': str(TEST_SOURCE), 'cache': self.code, 'write_costs': path})
+        return bool(result) and os.path.isfile(path)
+
+    def run_tests(self, test_ids, overrides, cpu_limit) -> dict | None:
+        """{test id: passed} for tests run, in order, against the patched sources."""
+        if not self.baseline():
+            return None
+        result = self.ask({'tests': list(test_ids), 'overrides': overrides, 'source': str(TEST_SOURCE),
+                           'stop': True, 'cpu_limit': cpu_limit})
+        return result.get('results') if result else None
 
     def check_baseline(self) -> bool:
         if self.checks is None and not self.checks_failed and self.baseline():
@@ -1357,6 +1399,12 @@ def prepare(map_path: Path) -> int:
         return 0
     state.code = str(code)
     written = [code, saved] + ([keys_file] if keys_file.is_file() else [])
+    costs = HERE / 'test-costs.json'
+    files = {test_id.split('::')[0] for test_id in data['tests']}
+    if state.prepare_costs(str(costs), files, data['sources']):
+        written.append(costs)
+    else:
+        log('no test checkout or cost measurement failed: selected tests will not be run')
     if state.prepare_checks(str(checks)):
         written.append(checks)
     else:
@@ -1447,6 +1495,10 @@ class Selector:
         spawners = set()
         self.py_info = {}
         self.last_changed = None
+        # Running selected tests needs a patch made only of edits to existing sqlglot modules.
+        self.verifiable = bool(files) and all(
+            f.old is not None and f.old == f.new and f.new.startswith('sqlglot/') and f.new.endswith('.py')
+            and not f.binary and not f.special and f.new in m.sources for f in files)
         # What the differential checks need: patched sqlglot sources, data files (new text or None).
         patched, data = {}, {}
         for f in files:
@@ -1519,12 +1571,63 @@ class Selector:
                 spawners |= m.import_only_spawners
         if import_time_sources or tests:
             spawners |= m.other_spawners
+        self.patched = patched
         if m.proxies and not new_modules:
             try:
                 tests = self.prune_by_checks(tests, patched, data, explain)
             except Exception as error:  # noqa: BLE001 - a failed check only keeps the TPC tests
                 log(f'check error {error!r}')
         return tests, spawners
+
+    # -- running cheap selections (plan step 4)
+
+    def verify(self, chosen: set[int], durations: dict[int, int], explain=None) -> set[int]:
+        """Drop selected tests that pass when run against the patched sources.
+
+        Only for patches that edit existing sqlglot modules in place, never for tests that
+        start subprocesses (those import sqlglot from disk), and only when the estimated
+        CPU (forking, importing the test modules, class setup, running the tests) is well
+        below the simulated seconds a passing run would save. Tests run cheapest first and
+        stop at the first one that does not pass; it and the ones not reached stay.
+        """
+        if (not chosen or not getattr(self, 'verifiable', False) or not (TEST_SOURCE / 'tests').is_dir()
+                or time.monotonic() - self.state.started > VERIFY_UNTIL):
+            return chosen
+        costs = self.state.test_costs()
+        if not costs:
+            return chosen
+        m = self.m
+        ids = {t['number']: t['id'] for t in m.catalog}
+        spawners = {m.number_of_index[i] for i in m.import_only_spawners | m.other_spawners}
+        if chosen & spawners or any(n not in ids for n in chosen):
+            return chosen
+        files = {ids[n].split('::')[0] for n in chosen}
+        classes = {ids[n].rsplit('::', 1)[0] for n in chosen}
+        frontier = list(files)
+        while frontier:  # with the test modules they import (each costed once)
+            for dep in costs.get('deps:' + frontier.pop(), ()):
+                if dep not in files:
+                    files.add(dep)
+                    frontier.append(dep)
+        if any(f in costs and costs[f] is None for f in files):
+            return chosen  # a test module that does not import here
+        estimate = (costs.get('<fork>', 0.1) + sum(costs.get(f) or 0.0 for f in files)
+                    + sum(costs.get(c, 0.0) for c in classes)
+                    + RUN_FACTOR * sum(durations[n] for n in chosen) / 1000)
+        workers = schedule({n: durations[n] for n in chosen})
+        saving = (max(sum(durations[n] for n in w) for w in workers) + WORKER_MS * len(workers)) / 1000
+        if estimate > VERIFY_RATIO * saving:
+            if explain is not None:
+                explain.append(f'verify: skipped (cost {estimate:.2f}s vs saving {saving:.2f}s)')
+            return chosen
+        order = sorted(chosen, key=lambda n: (durations[n], n))
+        results = self.state.run_tests([ids[n] for n in order], self.patched, max(5, int(3 * estimate) + 2))
+        if results is None:
+            return chosen
+        passed = {n for n in order if results.get(ids[n]) is True}
+        if explain is not None:
+            explain.append(f'verify: {len(passed)}/{len(chosen)} pass (cost {estimate:.2f}s, saving {saving:.2f}s)')
+        return chosen - passed
 
     # -- differential checks of the expensive TPC tests
 
@@ -2020,6 +2123,11 @@ def main():
         if chosen is None:
             chosen = every
         chosen &= every
+        if selector is not None and chosen is not every:
+            try:
+                chosen = selector.verify(chosen, durations, explain)
+            except Exception as error:  # noqa: BLE001 - verification only ever removes passing tests
+                log(f'{patch.stem}: verify error {error!r}')
         workers = schedule({n: durations[n] for n in chosen})
         lines.append(json.dumps({'commit': patch.stem, 'workers': workers}, separators=(',', ':')))
         if explain is not None:
