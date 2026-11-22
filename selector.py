@@ -40,6 +40,15 @@ CODING = re.compile(r'^[ \t\f]*#.*?coding[:=]')
 # pytest reads these from the repository root; a conftest.py is loaded from any test directory.
 CONFIG_FILES = ('pyproject.toml', 'setup.cfg', 'setup.py', 'pytest.ini', 'tox.ini', 'conftest.py', '.coveragerc')
 WORKER_MS = 2000
+# CPU seconds a forked child may use: a check recomputes at most every TPC-DS step
+# (a few seconds); a fingerprint imports everything once.
+CHECK_CPU_LIMIT = 25
+FINGERPRINT_CPU_LIMIT = 60
+# Wall-clock guards for the whole run (the scorer allows 4.5 minutes): past the
+# first, selected TPC tests are kept without checks; past the second, commits that
+# need a patched import select every test.
+CHECKS_UNTIL = 150.0
+IMPORTS_UNTIL = 210.0
 CHECK_PHASES = ('transpile', 'parse', 'optimize', 'plan')
 MAX_WORKERS = 8
 HERE = Path(__file__).resolve().parent
@@ -912,6 +921,7 @@ class ImportState:
         self.checks_failed = False
         self.server = None
         self.seconds = {}  # wall seconds spent waiting on the server, by request kind
+        self.started = time.monotonic()
 
     def close(self):
         if self.server is not None:
@@ -986,7 +996,7 @@ class ImportState:
         except OSError:
             self.kill_server()
             return None
-        line = self.readline(120)
+        line = self.readline(2 * int(request.get('cpu_limit') or 60) + 10)
         kind = 'checks' if 'checks' in request else 'fingerprint'
         self.seconds[kind] = self.seconds.get(kind, 0.0) + time.monotonic() - started
         if line is None:
@@ -1066,8 +1076,10 @@ class ImportState:
         if not checks or self.check_inputs is None or not self.check_baseline():
             return {}
         self.checks_run += 1
+        if time.monotonic() - self.started > CHECKS_UNTIL:
+            return {}
         request = {'checks': checks, 'overrides': overrides, 'helpers': self.check_inputs['helpers'],
-                   'fixtures': dict(self.check_inputs['fixtures'], **fixtures)}
+                   'fixtures': dict(self.check_inputs['fixtures'], **fixtures), 'cpu_limit': CHECK_CPU_LIMIT}
         result = self.ask(request)
         if result is None:
             return {}
@@ -1075,10 +1087,12 @@ class ImportState:
         return {name: found.get(name) is True for name in checks}
 
     def changes(self, overrides):
+        if time.monotonic() - self.started > IMPORTS_UNTIL:
+            raise Everything('out of time for patched imports')
         if not self.baseline():
             raise Everything('baseline import state unavailable')
         self.runs += 1
-        result = self.ask({'overrides': overrides})
+        result = self.ask({'overrides': overrides, 'cpu_limit': FINGERPRINT_CPU_LIMIT})
         if result is None:
             raise Everything('patched sqlglot fails to import')
         if result['new_failures']:

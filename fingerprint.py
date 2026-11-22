@@ -21,6 +21,7 @@ import json
 import marshal
 import os
 import re
+import resource
 import sys
 import types
 
@@ -690,6 +691,13 @@ def serve():
         pid = os.fork()
         if pid == 0:
             os.close(read)
+            try:
+                # Patched code can loop forever; CPU time is charged, so cap it (the
+                # child then dies and the selector keeps what it could not judge).
+                limit = int(request.get('cpu_limit') or 60)
+                resource.setrlimit(resource.RLIMIT_CPU, (limit, limit + 1))
+            except (ValueError, OSError):
+                pass
             try:
                 if 'checks' in request:
                     result = run_checks(request, codes, checks_baseline) if checks_baseline else {'ok': False, 'error': 'no check baseline'}
