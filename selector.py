@@ -1299,7 +1299,10 @@ class Selector:
         if import_time_sources or tests:
             spawners |= m.other_spawners
         if m.proxies and not new_modules:
-            tests = self.prune_by_checks(tests, patched, data, explain)
+            try:
+                tests = self.prune_by_checks(tests, patched, data, explain)
+            except Exception as error:  # noqa: BLE001 - a failed check only keeps the TPC tests
+                log(f'check error {error!r}')
         return tests, spawners
 
     # -- differential checks of the expensive TPC tests
